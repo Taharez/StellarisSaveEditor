@@ -5,6 +5,7 @@ using System;
 using System.Linq;
 using StellarisSaveEditor.Enums;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 namespace StellarisSaveEditor.Helpers
 {
@@ -12,6 +13,10 @@ namespace StellarisSaveEditor.Helpers
     {
         public static GameState ParseGamestate(List<string> gameStateText)
         {
+            var gameStateRaw = new GameStateRaw();
+
+            ParseGamestateRaw(gameStateRaw, gameStateText);
+
             var gameState = new GameState();
 
             ParseGamestateCommon(gameState, gameStateText);
@@ -21,6 +26,102 @@ namespace StellarisSaveEditor.Helpers
             ParseGamestateCountries(gameState, gameStateText);
 
             return gameState;
+        }
+
+        private static void ParseGamestateRaw(GameStateRaw gameStateRaw, List<string> gameStateText)
+        {
+            gameStateRaw.RootSection = new GameStateRawSection() // Container for all top-level sections and attributes
+            {
+                Name = "Root"
+            };
+            var currentSection = gameStateRaw.RootSection;
+            for (int i = 0; i < gameStateText.Count; ++i)
+            {
+                var currentLine = gameStateText[i].Trim();
+                if (String.IsNullOrWhiteSpace(currentLine))
+                {
+                    // Skip blank lines
+                    continue;
+                }
+                else if (currentLine.Contains("={"))
+                {
+                    // Named section start
+                    var sectionName = currentLine.Substring(0, currentLine.IndexOf("={"));
+                    var section = new GameStateRawSection
+                    {
+                        Parent = currentSection,
+                        Name = sectionName
+                    };
+                    currentSection.Sections.Add(section);
+                    // Check for single-line section/list
+                    if (currentLine.Contains("}"))
+                    {
+                        var valueStartIndex = currentLine.IndexOf("={") + 2;
+                        var valueEndIndex = currentLine.IndexOf("}") - 1;
+                        var attributeValue = currentLine.Substring(valueStartIndex, valueEndIndex - valueStartIndex).Trim();
+                        var attribute = new GameStateRawAttribute
+                        {
+                            Parent = currentSection,
+                            Name = null,
+                            Value = attributeValue
+                        };
+                        section.Attributes.Add(attribute);
+                    }
+                    else
+                    {
+                        // Start of new section, update current section until end of scope
+                        currentSection = section;
+                    }
+                }
+                else if (currentLine.Contains("{"))
+                {
+                    // Unnamed section start
+                    var section = new GameStateRawSection
+                    {
+                        Parent = currentSection,
+                        Name = null
+                    };
+                    currentSection.Sections.Add(section);
+                    currentSection = section;
+                }
+                else if (currentLine.Contains("}"))
+                {
+                    // Section close
+                    if (currentSection.Parent == null)
+                    {
+                        Debug.Assert(i == gameStateText.Count - 1);
+                    }
+                    else
+                    {
+                        currentSection = currentSection.Parent;
+                    }                            
+                }
+                else if (currentLine.Contains("="))
+                {
+                    // Attribute
+                    var attributeName = currentLine.Substring(0, currentLine.IndexOf("="));
+                    var attributeValue = currentLine.Substring(currentLine.IndexOf("=") + 1).Trim('\"');
+                    var attribute = new GameStateRawAttribute
+                    {
+                        Parent = currentSection,
+                        Name = attributeName,
+                        Value = attributeValue
+                    };
+                    currentSection.Attributes.Add(attribute);
+                }
+                else
+                {
+                    // Unnamed attribute/list item
+                    var attributeValue = currentLine;
+                    var attribute = new GameStateRawAttribute
+                    {
+                        Parent = currentSection,
+                        Name = null,
+                        Value = attributeValue
+                    };
+                    currentSection.Attributes.Add(attribute);
+                }
+            }
         }
 
         private static void ParseGamestateCommon(GameState gameState, List<string> gameStateText)

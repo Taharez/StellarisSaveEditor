@@ -102,6 +102,9 @@
     <Compile Include="Helpers\GalacticObjectsRenderer.cs" />
     <Compile Include="Helpers\GameStateParser.cs" />
     <Compile Include="Helpers\SvgXamlHelper.cs" />
+    <Compile Include="Models\GameStateRaw.cs" />
+    <Compile Include="Models\GameStateRawSection.cs" />
+    <Compile Include="Models\GameStateRawAttribute.cs" />
     <Compile Include="Models\GalacticObjectCoordinate.cs" />
     <Compile Include="Enums\GalacticObjectFlag.cs" />
     <Compile Include="Enums\GalacticObjectType.cs" />
