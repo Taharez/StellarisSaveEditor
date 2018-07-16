@@ -98,6 +98,7 @@
     <Compile Include="Attributes\EnumFileFieldAttribute.cs" />
     <Compile Include="Enums\AsteroidBeltType.cs" />
     <Compile Include="Enums\StarClass.cs" />
+    <Compile Include="Extensions\GameStateRawSectionExtensions.cs" />
     <Compile Include="Extensions\FileLineExtensions.cs" />
     <Compile Include="Helpers\GalacticObjectsRenderer.cs" />
     <Compile Include="Helpers\GameStateParser.cs" />

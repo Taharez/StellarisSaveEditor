@@ -14,16 +14,15 @@ namespace StellarisSaveEditor.Helpers
         public static GameState ParseGamestate(List<string> gameStateText)
         {
             var gameStateRaw = new GameStateRaw();
+            var gameState = new GameState() { GameStateRaw = gameStateRaw };
 
             ParseGamestateRaw(gameStateRaw, gameStateText);
+            
+            ParseGamestateCommon(gameState);
 
-            var gameState = new GameState();
+            ParseGamestateGalacticObjects(gameState);
 
-            ParseGamestateCommon(gameState, gameStateText);
-
-            ParseGamestateGalacticObjects(gameState, gameStateText);
-
-            ParseGamestateCountries(gameState, gameStateText);
+            ParseGamestateCountries(gameState);
 
             return gameState;
         }
@@ -124,179 +123,125 @@ namespace StellarisSaveEditor.Helpers
             }
         }
 
-        private static void ParseGamestateCommon(GameState gameState, List<string> gameStateText)
+        private static void ParseGamestateCommon(GameState gameState)
         {
-            gameState.Version = gameStateText.FindAndGetValue("version");
-            gameState.VersionControlRevision = gameStateText.FindAndGetValue("version_control_revision");
-            gameState.Name = gameStateText.FindAndGetValue("name");
+            var gameStateRaw = gameState.GameStateRaw;
+            
+            gameState.Version = gameStateRaw.RootSection.GetAttributeValueByName("version");
+            gameState.VersionControlRevision = gameStateRaw.RootSection.GetAttributeValueByName("version_control_revision");
+            gameState.Name = gameStateRaw.RootSection.GetAttributeValueByName("name");
 
             gameState.Player = new Player();
-            int playerSectionStartLine = FindSectionStart("player", gameStateText);
-            var playerNameLine = gameStateText[playerSectionStartLine + 2];
-            gameState.Player.Name = playerNameLine.GetValue("name");
-            var playerCountryLine = gameStateText[playerSectionStartLine + 3];
+            var galacticObjectSection = gameStateRaw.RootSection.GetChildSectionByName("player");
+            gameState.Player.Name = galacticObjectSection.Sections.First().GetAttributeValueByName("name");
             int playerCountryIndex;
-            int.TryParse(playerCountryLine.GetValue("country"), out playerCountryIndex);
+            int.TryParse(galacticObjectSection.Sections.First().GetAttributeValueByName("country"), out playerCountryIndex);
             gameState.Player.CountryIndex = playerCountryIndex;
         }
 
-        private static void ParseGamestateGalacticObjects(GameState gameState, List<string> gameStateText, int startIndex = 0)
+        private static void ParseGamestateGalacticObjects(GameState gameState)
         {
-            int galacticObjectSectionStartLine = FindSectionStart("galactic_object", gameStateText, startIndex);
+            var gameStateRaw = gameState.GameStateRaw;
 
-            if (galacticObjectSectionStartLine < 0)
-                return;
-
-            int galacticObjectSectionEndLine = GetSectionEndLine(gameStateText, galacticObjectSectionStartLine);
-            if (galacticObjectSectionEndLine < galacticObjectSectionStartLine)
-                return;
-
-            // Read GalacticObjects
             gameState.GalacticObjects = new List<GalacticObject>();
-            for (int i = galacticObjectSectionStartLine; i < galacticObjectSectionEndLine; ++i)
+            var galacticObjectSection = gameStateRaw.RootSection.GetChildSectionByName("galactic_object");
+            foreach (var galacticObjectItem in galacticObjectSection.Sections)
             {
                 var galacticObject = new GalacticObject();
-                var line = gameStateText[i];
-                if (Regex.IsMatch(line, "[0-9]+={"))
+
+                // Coordinate
+                galacticObject.Coordinate = new GalacticObjectCoordinate();
+                var coordinateSection = galacticObjectItem.GetChildSectionByName("coordinate");
+                double x;
+                double y;
+                long origin;
+                string randomized;
+                double.TryParse(coordinateSection.GetAttributeValueByName("x"), out x);
+                double.TryParse(coordinateSection.GetAttributeValueByName("y"), out y);
+                long.TryParse(coordinateSection.GetAttributeValueByName("origin"), out origin);
+                randomized = coordinateSection.GetAttributeValueByName("randomized");
+                galacticObject.Coordinate.X = x;
+                galacticObject.Coordinate.Y = y;
+                galacticObject.Coordinate.Origin = origin;
+                galacticObject.Coordinate.Randomized = randomized.Equals("yes");
+
+                // Type and name
+                GalacticObjectType type;
+                Enum.TryParse(galacticObjectItem.GetAttributeValueByName("type"), out type);
+                galacticObject.Type = type;
+                galacticObject.Name = galacticObjectItem.GetAttributeValueByName("name");
+
+                // Planets 
+                galacticObject.PlanetIndices = new List<int>();
+                var planetAttributes = galacticObjectItem.GetAttributeValuesByName("planet");
+                foreach (var planetAttribute in planetAttributes)
                 {
-                    int objectStartLine = i;
-                    int objectEndLine = GetSectionEndLine(gameStateText, objectStartLine);
-                    galacticObject.Coordinate = new GalacticObjectCoordinate();
-
-                    // Coordinates
-                    var xLine = gameStateText[i + 2];
-                    var yLine = gameStateText[i + 3];
-                    var originLine = gameStateText[i + 4];
-                    var randomizedLine = gameStateText[i + 5];
-                    double x;
-                    double y;
-                    long origin;
-                    string randomized;
-                    double.TryParse(xLine.GetValue("x"), out x);
-                    double.TryParse(yLine.GetValue("y"), out y);
-                    long.TryParse(originLine.GetValue("origin"), out origin);
-                    randomized = randomizedLine.GetValue("randomized");
-
-                    galacticObject.Coordinate.X = x;
-                    galacticObject.Coordinate.Y = y;
-                    galacticObject.Coordinate.Origin = origin;
-                    galacticObject.Coordinate.Randomized = randomized.Equals("yes");
-
-                    // Type and name
-                    var typeLine = gameStateText[i + 7];
-                    GalacticObjectType type;
-                    Enum.TryParse(line.GetValue("type"), out type);
-                    galacticObject.Type = type;
-                    var nameLine = gameStateText[i + 8];
-                    galacticObject.Name = nameLine.GetValue("name");
-
-                    // Planets 
-                    galacticObject.PlanetIndices = new List<int>();
-                    var planetIndexLine = 9;
-                    var planetLine = gameStateText[i + planetIndexLine];
-                    while (planetLine.Contains("planet"))
-                    {
-                        int planetIndex;
-                        int.TryParse(planetLine.GetValue("planet"), out planetIndex);
-                        galacticObject.PlanetIndices.Add(planetIndex);
-                        ++planetIndexLine;
-                        planetLine = gameStateText[i + planetIndexLine];
-                    }
-
-                    i = i + planetIndexLine;
-
-                    int starClassLineIndex = FindNextAttribute("star_class", gameStateText, i);
-
-                    // Star class
-                    var starClassLine = gameStateText[starClassLineIndex];
-                    StarClass starClass;
-                    Enum.TryParse(starClassLine.GetValue("star_class"), out starClass);
-                    galacticObject.StarClass = starClass;
-
-                    i = starClassLineIndex + 1;
-
-                    // Hyper lanes
-                    galacticObject.HyperLanes = new List<HyperLane>();
-                    int hyperLaneSectionStartLine = FindSectionStart("hyperlane", gameStateText, i, galacticObjectSectionEndLine);
-                    if (hyperLaneSectionStartLine > 0)
-                    {
-                        int hyperLaneSectionEndLine = GetSectionEndLine(gameStateText, hyperLaneSectionStartLine);
-                        for (int h = hyperLaneSectionStartLine; h < hyperLaneSectionEndLine; ++h)
-                        {
-                            var hyperLaneLine = gameStateText[h];
-                            if (hyperLaneLine.Trim().StartsWith("to="))
-                            {
-                                var hyperLane = new HyperLane();
-                                int toGalacticObjectIndex;
-                                int.TryParse(hyperLaneLine.GetValue("to"), out toGalacticObjectIndex);
-                                hyperLane.ToGalacticObjectIndex = toGalacticObjectIndex;
-                                hyperLaneLine = gameStateText[h + 1];
-                                double hyperLaneLength;
-                                double.TryParse(hyperLaneLine.GetValue("length"), out hyperLaneLength);
-                                hyperLane.Length = hyperLaneLength;
-                                galacticObject.HyperLanes.Add(hyperLane);
-                                h += 3;
-                            }
-                        }
-
-                        i = hyperLaneSectionEndLine;
-                    }
-
-                    // Flags
-                    galacticObject.GalacticObjectFlags = new List<GalacticObjectFlag>();
-                    int flagsSectionStartLine = FindSectionStart("flags", gameStateText, i, galacticObjectSectionEndLine);
-                    if (flagsSectionStartLine > 0)
-                    {
-                        int flagsSectionEndLine = GetSectionEndLine(gameStateText, flagsSectionStartLine);
-                        for (int f = flagsSectionStartLine + 1; f < flagsSectionEndLine; ++f)
-                        {
-                            var flagLine = gameStateText[f].Trim(); ;
-                            GalacticObjectFlag flag;
-                            Enum.TryParse(flagLine.Substring(0, flagLine.IndexOf("=")), out flag);
-                            galacticObject.GalacticObjectFlags.Add(flag);
-                        }
-                    }
-
-                    gameState.GalacticObjects.Add(galacticObject);
-
-                    i = objectEndLine;
+                    int planetIndex;
+                    int.TryParse(planetAttribute, out planetIndex);
+                    galacticObject.PlanetIndices.Add(planetIndex);
                 }
+
+                // Star class
+                StarClass starClass;
+                Enum.TryParse(galacticObjectItem.GetAttributeValueByName("star_class"), out starClass);
+                galacticObject.StarClass = starClass;
+
+                // Hyper lanes
+                galacticObject.HyperLanes = new List<HyperLane>();
+                var hyperLanesSection = galacticObjectItem.GetChildSectionByName("hyperlane");
+                if (hyperLanesSection != null)
+                {
+                    foreach (var hyperLaneSection in hyperLanesSection.Sections)
+                    {
+                        var hyperLane = new HyperLane();
+                        int toGalacticObjectIndex;
+                        int.TryParse(hyperLaneSection.GetAttributeValueByName("to"), out toGalacticObjectIndex);
+                        hyperLane.ToGalacticObjectIndex = toGalacticObjectIndex;
+                        double hyperLaneLength;
+                        double.TryParse(hyperLaneSection.GetAttributeValueByName("length"), out hyperLaneLength);
+                        hyperLane.Length = hyperLaneLength;
+                        galacticObject.HyperLanes.Add(hyperLane);
+                    }
+                }
+
+                // Flags
+                galacticObject.GalacticObjectFlags = new List<GalacticObjectFlag>();
+                var flagsSection = galacticObjectItem.GetChildSectionByName("flags");
+                if (flagsSection != null)
+                {
+                    foreach (var flagAttribute in flagsSection.Attributes)
+                    {
+                        GalacticObjectFlag flag;
+                        Enum.TryParse(flagAttribute.Name, out flag);
+                        galacticObject.GalacticObjectFlags.Add(flag);
+                    }
+                }
+
+                gameState.GalacticObjects.Add(galacticObject);
             }
         }
 
-        private static void ParseGamestateCountries(GameState gameState, List<string> gameStateText, int startIndex = 0)
+        private static void ParseGamestateCountries(GameState gameState)
         {
-            int countrySectionStartLine = FindSectionStart("country", gameStateText, startIndex);
+            var gameStateRaw = gameState.GameStateRaw;
 
-            int countrySectionEndLine = GetSectionEndLine(gameStateText, countrySectionStartLine);
-            if (countrySectionEndLine < countrySectionStartLine)
-                return;
-
-            // Read countries
             gameState.Countries = new List<Country>();
-            for (int i = countrySectionStartLine; i < countrySectionEndLine; ++i)
+            var countrySection = gameStateRaw.RootSection.GetChildSectionByName("country");
+            foreach (var countrySectionItem in countrySection.Sections)
             {
                 var country = new Country();
-                var line = gameStateText[i];
-                if (Regex.IsMatch(line, "[0-9]+={"))
+                
+                country.Name = countrySectionItem.GetAttributeValueByName("name");
+
+                var startingSystemAttribute = countrySectionItem.GetAttributeByName("starting_system");
+                if (startingSystemAttribute != null)
                 {
-                    int countryStartLine = i;
-                    int countryEndLine = GetSectionEndLine(gameStateText, countryStartLine);
-
-                    country.Name = gameStateText[i + 18].GetValue("name");
-
-                    int startingSystemIndexLine = FindNextAttribute("starting_system", gameStateText, i + 18, countryEndLine);
-                    if (startingSystemIndexLine > 0)
-                    {
-                        int startingSystemIndex;
-                        int.TryParse(gameStateText[startingSystemIndexLine], out startingSystemIndex);
-                        country.StartingSystemIndex = startingSystemIndex;
-                    }
-
-                    gameState.Countries.Add(country);
-
-                    i = countryEndLine;
+                    int startingSystemIndex;
+                    int.TryParse(startingSystemAttribute.Value, out startingSystemIndex);
+                    country.StartingSystemIndex = startingSystemIndex;
                 }
+
+                gameState.Countries.Add(country);
             }
         }
 
