@@ -24,6 +24,7 @@
         sc_m_giant,
         sc_neutron_star,
         sc_pulsar,
+        sc_t,
         sc_trinary_1,
         sc_trinary_2,
         sc_trinary_3,
