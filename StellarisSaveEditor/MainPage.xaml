@@ -25,12 +25,13 @@
             <TextBlock x:Name="VersionLabel" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" />
             <TextBlock x:Name="SaveNameLabel" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" />
             <StackPanel x:Name="FilterPanel" Visibility="Collapsed">
-                <CheckBox x:Name="HighlightStartingSystem" IsChecked="True" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0">Highlight starting system</CheckBox>
+                <CheckBox x:Name="HighlightStartingSystem" IsChecked="True" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" Checked="HighlightStartingSystem_Checked" Unchecked="HighlightStartingSystem_Unchecked">Highlight starting system</CheckBox>
                 <ListBox x:Name="MarkSystemFlags" SelectionMode="Multiple" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200"  Height="450" Margin="0,20,0,0" SelectionChanged="MarkSystemFlags_SelectionChanged" />
             </StackPanel>
         </StackPanel>
 
         <Canvas x:Name="MapCanvas" Grid.Row="0" Grid.Column="1" Width="600" Height="600" Margin="10,50,10,10" />
+        <Canvas x:Name="StartingSystemsCanvas" Grid.Row="0" Grid.Column="1" Width="600" Height="600" Margin="10,50,10,10" />
         <Canvas x:Name="MarkedSystemsCanvas" Grid.Row="0" Grid.Column="1" Width="600" Height="600" Margin="10,50,10,10" />
 
     </Grid>

@@ -28,6 +28,8 @@ namespace StellarisSaveEditor
     {
         private GameState GameState { get; set; }
 
+        private const double MarkedSystemRadius = 10;
+
         public MainPage()
         {
             this.InitializeComponent();
@@ -36,6 +38,16 @@ namespace StellarisSaveEditor
         private void MarkSystemFlags_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             UpdateMarkedSystems();
+        }
+
+        private void HighlightStartingSystem_Checked(object sender, RoutedEventArgs e)
+        {
+            UpdateStartingSystemHighlight();
+        }
+
+        private void HighlightStartingSystem_Unchecked(object sender, RoutedEventArgs e)
+        {
+            UpdateStartingSystemHighlight();
         }
 
         private async void SelectFile_Clicked(object sender, RoutedEventArgs e)
@@ -159,6 +171,16 @@ namespace StellarisSaveEditor
                 Canvas.SetTop(line, 0);
             }
 
+            UpdateStartingSystemHighlight();
+        }
+
+        private void UpdateStartingSystemHighlight()
+        {
+            if (StartingSystemsCanvas == null)
+                return;
+
+            StartingSystemsCanvas.Children.Clear();
+            
             // Player system
             if (HighlightStartingSystem.IsChecked == true)
             {
@@ -168,13 +190,13 @@ namespace StellarisSaveEditor
                 {
                     Stroke = playerSystemBrush,
                     StrokeThickness = 2,
-                    Width = 20,
-                    Height = 20
+                    Width = 2 * MarkedSystemRadius,
+                    Height = 2 * MarkedSystemRadius
                 };
 
-                MapCanvas.Children.Add(playerSystemShape);
-                Canvas.SetLeft(playerSystemShape, playerSystemCoordinate.X - 10);
-                Canvas.SetTop(playerSystemShape, playerSystemCoordinate.Y - 10);
+                StartingSystemsCanvas.Children.Add(playerSystemShape);
+                Canvas.SetLeft(playerSystemShape, playerSystemCoordinate.X - MarkedSystemRadius);
+                Canvas.SetTop(playerSystemShape, playerSystemCoordinate.Y - MarkedSystemRadius);
                 Canvas.SetZIndex(playerSystemShape, 1000);
             }
         }
@@ -182,6 +204,7 @@ namespace StellarisSaveEditor
         private void UpdateMarkedSystems()
         {
             MarkedSystemsCanvas.Children.Clear();
+
             if (MarkSystemFlags.SelectedItem != null)
             {
                 var markedFlags = MarkSystemFlags.SelectedItems.Select(i => (i as ListBoxItem).Content as string);
@@ -193,13 +216,13 @@ namespace StellarisSaveEditor
                     {
                         Stroke = markedSystemBrush,
                         StrokeThickness = 2,
-                        Width = 20,
-                        Height = 20
+                        Width = 2 * MarkedSystemRadius,
+                        Height = 2 * MarkedSystemRadius
                     };
 
                     MarkedSystemsCanvas.Children.Add(markedSystemShape);
-                    Canvas.SetLeft(markedSystemShape, markedSystemCoordinate.X - 10);
-                    Canvas.SetTop(markedSystemShape, markedSystemCoordinate.Y - 10);
+                    Canvas.SetLeft(markedSystemShape, markedSystemCoordinate.X - MarkedSystemRadius);
+                    Canvas.SetTop(markedSystemShape, markedSystemCoordinate.Y - MarkedSystemRadius);
                     Canvas.SetZIndex(markedSystemShape, 1000);
                 }
             }
