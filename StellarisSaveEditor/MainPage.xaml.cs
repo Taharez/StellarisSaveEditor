@@ -27,8 +27,6 @@ namespace StellarisSaveEditor
     public sealed partial class MainPage : Page
     {
         private GameState GameState { get; set; }
-        private int MapPixelWidth = 800;
-        private int MapPixelHeight = 800;
 
         public MainPage()
         {
@@ -59,8 +57,6 @@ namespace StellarisSaveEditor
                     SaveNameLabel.Text = GameState.Name;
 
                     UpdateFilters();
-
-                    //UpdateBitmapMapImage();
 
                     UpdateCanvasMapImage();
 
@@ -130,51 +126,43 @@ namespace StellarisSaveEditor
             }
         }
 
-        private async void UpdateBitmapMapImage()
-        {
-            // Render map as bitmap
-            var wb = new WriteableBitmap(MapPixelWidth, MapPixelHeight);
-            var mapImageArray = GalacticObjectsRenderer.RenderAsBitmap(GameState, MapPixelWidth, MapPixelHeight);
-            
-            using (Stream stream = wb.PixelBuffer.AsStream())
-            {
-                await stream.WriteAsync(mapImageArray, 0, mapImageArray.Length);
-            }
-            //MapImage.Source = wb;
-        }
-
         private void UpdateCanvasMapImage()
         {
             // Clear any old elements in map canvas
             MapCanvas.Children.Clear();
 
             // Galactic objects
-            var svg = GalacticObjectsRenderer.RenderAsSvg(GameState, MapPixelWidth, MapPixelHeight);
+            var svg = GalacticObjectsRenderer.RenderAsSvg(GameState, MapCanvas.ActualWidth, MapCanvas.ActualHeight);
 
             var path = new Windows.UI.Xaml.Shapes.Path
             {
                 Data = SvgXamlHelper.PathMarkupToGeometry(svg),
                 Fill = new SolidColorBrush(Colors.LightBlue),
                 Stretch = Stretch.Fill,
-                Width = MapPixelWidth,
-                Height = MapPixelHeight,
+                Width = MapCanvas.ActualWidth,
+                Height = MapCanvas.ActualHeight,
                 HorizontalAlignment = HorizontalAlignment.Center
             };
 
             MapCanvas.Children.Add(path);
+            Canvas.SetLeft(path, 0);
+            Canvas.SetTop(path, 0);
 
             // Hyper lanes
             var hyperLaneBrush = new SolidColorBrush(Colors.AntiqueWhite);
-            var hyperLaneLines = GalacticObjectsRenderer.RenderHyperLanesAsLineList(GameState, MapPixelWidth, MapPixelHeight);
-            foreach(var line in hyperLaneLines)
+            var hyperLaneLines = GalacticObjectsRenderer.RenderHyperLanesAsLineList(GameState, MapCanvas.ActualWidth, MapCanvas.ActualHeight);
+            foreach(var hyperLaneLine in hyperLaneLines)
             {
-                MapCanvas.Children.Add(new Line { Stroke = hyperLaneBrush, X1 = line.Item1.X, Y1 = line.Item1.Y, X2 = line.Item2.X, Y2 = line.Item2.Y });
+                var line = new Line { Stroke = hyperLaneBrush, X1 = hyperLaneLine.Item1.X, Y1 = hyperLaneLine.Item1.Y, X2 = hyperLaneLine.Item2.X, Y2 = hyperLaneLine.Item2.Y };
+                MapCanvas.Children.Add(line);
+                Canvas.SetLeft(line, 0);
+                Canvas.SetTop(line, 0);
             }
 
             // Player system
             if (HighlightStartingSystem.IsChecked == true)
             {
-                var playerSystemCoordinate = GalacticObjectsRenderer.GetPlayerSystemCoordinates(GameState, MapPixelWidth, MapPixelHeight);
+                var playerSystemCoordinate = GalacticObjectsRenderer.GetPlayerSystemCoordinates(GameState, MapCanvas.ActualWidth, MapCanvas.ActualHeight);
                 var playerSystemBrush = new SolidColorBrush(Colors.OrangeRed);
                 var playerSystemShape = new Ellipse
                 {
@@ -197,7 +185,7 @@ namespace StellarisSaveEditor
             if (MarkSystemFlags.SelectedItem != null)
             {
                 var markedFlags = MarkSystemFlags.SelectedItems.Select(i => (i as ListBoxItem).Content as string);
-                var markedSystemCoordinates = GalacticObjectsRenderer.GetMarkedSystemCoordinates(GameState, MapPixelWidth, MapPixelHeight, markedFlags);
+                var markedSystemCoordinates = GalacticObjectsRenderer.GetMarkedSystemCoordinates(GameState, MapCanvas.ActualWidth, MapCanvas.ActualHeight, markedFlags);
                 var markedSystemBrush = new SolidColorBrush(Colors.Turquoise);
                 foreach (var markedSystemCoordinate in markedSystemCoordinates)
                 {

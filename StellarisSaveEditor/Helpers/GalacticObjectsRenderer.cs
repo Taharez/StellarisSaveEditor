@@ -12,6 +12,8 @@ namespace StellarisSaveEditor.Helpers
     {
         private struct MapSettings
         {
+            public double MapPixelWidth { get; set; }
+            public double MapPixelHeight { get; set; }
             public double MinX { get; set; }
             public double MinY { get; set; }
             public double MaxX { get; set; }
@@ -20,100 +22,83 @@ namespace StellarisSaveEditor.Helpers
             public double ModifierY { get; set; }
         }
 
-        public static byte[] RenderAsBitmap(GameState gameState, int mapPixelWidth, int mapPixelHeight)
-        {
-            // Uses BGRA format which is 4 bytes per pixel.
-            byte[] imageArray = new byte[mapPixelHeight * mapPixelWidth * 4];
-
-            // Write black background
-            for (int i = 0; i < imageArray.Length; i += 4)
-            {
-                imageArray[i] = 0; // Blue
-                imageArray[i + 1] = 0;  // Green
-                imageArray[i + 2] = 0; // Red
-                imageArray[i + 3] = 255; // Alpha
-            }
-
-            var mapSettings = GetMapSettings(gameState, mapPixelWidth, mapPixelHeight);
-            foreach (var galacticObject in gameState.GalacticObjects)
-            {
-                var modifiedX = Math.Min((galacticObject.Coordinate.X - mapSettings.MinX) / mapSettings.ModifierX, mapPixelWidth - 1);
-                var modifiedY = Math.Min((galacticObject.Coordinate.Y - mapSettings.MinY) / mapSettings.ModifierY, mapPixelHeight - 1);
-                var pixelIndex = ((int)modifiedX + (int)modifiedY * mapPixelWidth) * 4;
-                imageArray[pixelIndex] = 232;
-                imageArray[pixelIndex + 1] = 128;
-                imageArray[pixelIndex + 2] = 128;
-            }
-
-            return imageArray;
-        }
-
-        public static string RenderAsSvg(GameState gameState, int mapPixelWidth, int mapPixelHeight, double defaultObjectRadius = 2.0)
+        public static string RenderAsSvg(GameState gameState, double mapWidth, double mapHeight, double defaultObjectRadius = 2.0)
         {
             const int EstimatedCharactersPerSystem = 60;
 
             var svg = new StringBuilder(gameState.GalacticObjects.Count * EstimatedCharactersPerSystem);
-            var mapSettings = GetMapSettings(gameState, mapPixelWidth, mapPixelHeight);
+            var mapSettings = GetMapSettings(gameState, mapWidth, mapHeight);
             foreach (var galacticObject in gameState.GalacticObjects)
             {
                 double objectRadius = defaultObjectRadius;
-                var cX = (galacticObject.Coordinate.X - mapSettings.MinX) * mapSettings.ModifierX;
-                var cY = (galacticObject.Coordinate.Y - mapSettings.MinY) * mapSettings.ModifierY;
-                svg.Append("M" + (cX - objectRadius) + "," + (cY - objectRadius) + 
-                    "L" + (cX + objectRadius) + "," + (cY - objectRadius) + 
-                    "L" + (cX + objectRadius) + "," + (cY + objectRadius) + 
-                    "L" + (cX - objectRadius) + "," + (cY + objectRadius) + "z");
+                var c = GetModifiedCoordinate(mapSettings, galacticObject.Coordinate);
+                svg.Append("M" + (c.X - objectRadius) + "," + (c.Y - objectRadius) + 
+                    "L" + (c.X + objectRadius) + "," + (c.Y - objectRadius) + 
+                    "L" + (c.X + objectRadius) + "," + (c.Y + objectRadius) + 
+                    "L" + (c.X - objectRadius) + "," + (c.Y + objectRadius) + "z");
             }
 
             return svg.ToString();
         }
 
-        public static List<Tuple<Point, Point>> RenderHyperLanesAsLineList(GameState gameState, int mapPixelWidth, int mapPixelHeight)
+        public static List<Tuple<Point, Point>> RenderHyperLanesAsLineList(GameState gameState, double mapWidth, double mapHeight)
         {
             var lineList = new List<Tuple<Point, Point>>();
-            var mapSettings = GetMapSettings(gameState, mapPixelWidth, mapPixelHeight);
+            var mapSettings = GetMapSettings(gameState, mapWidth, mapHeight);
             foreach (var galacticObject in gameState.GalacticObjects)
             {
                 foreach (var hyperLane in galacticObject.HyperLanes)
                 {
                     var target = gameState.GalacticObjects[hyperLane.ToGalacticObjectIndex];
-                    var p1 = new Point((galacticObject.Coordinate.X - mapSettings.MinX) * mapSettings.ModifierX, (galacticObject.Coordinate.Y - mapSettings.MinY) * mapSettings.ModifierY);
-                    var p2 = new Point((target.Coordinate.X - mapSettings.MinX) * mapSettings.ModifierX, (target.Coordinate.Y - mapSettings.MinY) * mapSettings.ModifierY);
+                    var p1 = GetModifiedCoordinate(mapSettings, galacticObject.Coordinate);
+                    var p2 = GetModifiedCoordinate(mapSettings, target.Coordinate);
                     lineList.Add(new Tuple<Point, Point>(p1, p2));
                 }
             }
             return lineList;
         }
 
-        public static Point GetPlayerSystemCoordinates(GameState gameState, int mapPixelWidth, int mapPixelHeight)
+        public static Point GetPlayerSystemCoordinates(GameState gameState, double mapWidth, double mapHeight)
         {
             var playerSystem = gameState.GalacticObjects[gameState.Countries[gameState.Player.CountryIndex].StartingSystemIndex];
-            var mapSettings = GetMapSettings(gameState, mapPixelWidth, mapPixelHeight);
-            return new Point((playerSystem.Coordinate.X - mapSettings.MinX) * mapSettings.ModifierX, (playerSystem.Coordinate.Y - mapSettings.MinY) * mapSettings.ModifierY);
+            var mapSettings = GetMapSettings(gameState, mapWidth, mapHeight);
+            return GetModifiedCoordinate(mapSettings, playerSystem.Coordinate);
         }
 
-        public static List<Point> GetMarkedSystemCoordinates(GameState gameState, int mapPixelWidth, int mapPixelHeight, IEnumerable<string> markedFlags)
+        public static List<Point> GetMarkedSystemCoordinates(GameState gameState, double mapWidth, double mapHeight, IEnumerable<string> markedFlags)
         {
             var markedSystemFlags = markedFlags.Select(f => Enum.Parse(typeof(GalacticObjectFlag), f));
             var markedSystemCoordinates = new List<Point>();
             var markedSystems = gameState.GalacticObjects.Where(o => o.GalacticObjectFlags.Any(f => markedSystemFlags.Contains(f)));
-            var mapSettings = GetMapSettings(gameState, mapPixelWidth, mapPixelHeight);
+            var mapSettings = GetMapSettings(gameState, mapWidth, mapHeight);
             foreach (var markedSystem in markedSystems)
             {
-                markedSystemCoordinates.Add(new Point((markedSystem.Coordinate.X - mapSettings.MinX) * mapSettings.ModifierX, (markedSystem.Coordinate.Y - mapSettings.MinY) * mapSettings.ModifierY));
+                markedSystemCoordinates.Add(GetModifiedCoordinate(mapSettings, markedSystem.Coordinate));
             }
             return markedSystemCoordinates;
         }
 
-        private static MapSettings GetMapSettings(GameState gameState, int mapPixelWidth, int mapPixelHeight)
+        private static Point GetModifiedCoordinate(MapSettings mapSettings, GalacticObjectCoordinate coordinate)
         {
-            var settings = new MapSettings();
-            settings.MinX = gameState.GalacticObjects.Min(o => o.Coordinate.X);
-            settings.MinY = gameState.GalacticObjects.Min(o => o.Coordinate.Y);
-            settings.MaxX = gameState.GalacticObjects.Max(o => o.Coordinate.X);
-            settings.MaxY = gameState.GalacticObjects.Max(o => o.Coordinate.Y);
-            settings.ModifierX = mapPixelWidth / (settings.MaxX - settings.MinX);
-            settings.ModifierY = mapPixelHeight / (settings.MaxY - settings.MinY);
+            return new Point(
+                mapSettings.MapPixelWidth - ((coordinate.X - mapSettings.MinX) * mapSettings.ModifierX), // Flip X-coord to correspond to in-game coordinate system
+                (coordinate.Y - mapSettings.MinY) * mapSettings.ModifierY
+                );
+        }
+
+        private static MapSettings GetMapSettings(GameState gameState, double mapWidth, double mapHeight)
+        {
+            var settings = new MapSettings
+            {
+                MapPixelWidth = mapWidth,
+                MapPixelHeight = mapHeight,
+                MinX = gameState.GalacticObjects.Min(o => o.Coordinate.X),
+                MinY = gameState.GalacticObjects.Min(o => o.Coordinate.Y),
+                MaxX = gameState.GalacticObjects.Max(o => o.Coordinate.X),
+                MaxY = gameState.GalacticObjects.Max(o => o.Coordinate.Y)
+            };
+            settings.ModifierX = mapWidth / (settings.MaxX - settings.MinX);
+            settings.ModifierY = mapHeight / (settings.MaxY - settings.MinY);
             return settings;
         }
     }
