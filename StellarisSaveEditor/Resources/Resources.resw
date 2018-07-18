@@ -126,6 +126,12 @@
   <data name="GameStatePivot.Header" xml:space="preserve">
     <value>Game state</value>
   </data>
+  <data name="GameStateRawLabel.Text" xml:space="preserve">
+    <value>Raw game state data</value>
+  </data>
+  <data name="LoadingSaveFileLabel" xml:space="preserve">
+    <value>Loading save file</value>
+  </data>
   <data name="MapPivot.Header" xml:space="preserve">
     <value>Galaxy map</value>
   </data>
@@ -135,7 +141,16 @@
   <data name="OperationCanceled" xml:space="preserve">
     <value>Operation canceled.</value>
   </data>
+  <data name="ParsingSaveFileLabel" xml:space="preserve">
+    <value>Parsing save file</value>
+  </data>
   <data name="SelectFileButton.Content" xml:space="preserve">
     <value>Select file</value>
+  </data>
+  <data name="UpdatingGameStateLabel" xml:space="preserve">
+    <value>Loading game state</value>
+  </data>
+  <data name="UpdatingMapLabel" xml:space="preserve">
+    <value>Loading map</value>
   </data>
 </root>

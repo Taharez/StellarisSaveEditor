@@ -63,13 +63,35 @@ namespace StellarisSaveEditor
             }
         }
 
+        private void GameStateRawSections_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var selectedItem = GameStateRawSections.SelectedItem as ListViewItem;
+            var section = selectedItem != null ? selectedItem.DataContext as GameStateRawSection : null;
+            UpdateGameStateRawSectionChildList(section);
+        }
+
+        private void GameStateRawSectionChildList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var selectedItem = GameStateRawSectionChildList.SelectedItem as ListViewItem;
+            var section = selectedItem != null ? selectedItem.DataContext as GameStateRawSection : null;
+            UpdateGameStateRawSectionDetails(section);
+        }
+
         private async void SelectFile_Clicked(object sender, RoutedEventArgs e)
         {
+            SelectFile.IsEnabled = false;
+
             var res = ResourceLoader.GetForCurrentView();
 
             var saveFile = await LoadSaveFile();
             if (saveFile != null)
             {
+                UnloadGameState();
+
+                LoadingIndicatorRing.IsActive = true;
+                LoadingIndicatorLabel.Text = res.GetString("LoadingSaveFileLabel");
+                LoadingIndicatorPanel.Visibility = Visibility.Visible;
+
                 var openedFileLabel = res.GetString("OpenedFileLabel");
                 FileNameLabel.Text = string.Format(openedFileLabel, saveFile.Name);
 
@@ -88,6 +110,11 @@ namespace StellarisSaveEditor
                     UpdateCanvasMapImage();
 
                     FilterPanel.Visibility = Visibility.Visible;
+
+                    UpdateGameStateRawView();
+
+                    LoadingIndicatorPanel.Visibility = Visibility.Collapsed;
+                    LoadingIndicatorRing.IsActive = false;
                 }
             }
             else
@@ -95,6 +122,7 @@ namespace StellarisSaveEditor
                 var operationCanceledLabel = res.GetString("OperationCanceledLabel");
                 FileNameLabel.Text = operationCanceledLabel;
             }
+            SelectFile.IsEnabled = true;
         }
 
         private async Task<StorageFile> LoadSaveFile()
@@ -165,7 +193,7 @@ namespace StellarisSaveEditor
             var path = new Windows.UI.Xaml.Shapes.Path
             {
                 Data = SvgXamlHelper.PathMarkupToGeometry(svg),
-                Fill = new SolidColorBrush(Colors.LightBlue),
+                Fill = new SolidColorBrush(Colors.Blue),
                 Stretch = Stretch.Fill,
                 Width = MapCanvas.ActualWidth,
                 Height = MapCanvas.ActualHeight,
@@ -177,7 +205,7 @@ namespace StellarisSaveEditor
             Canvas.SetTop(path, 0);
 
             // Hyper lanes
-            var hyperLaneBrush = new SolidColorBrush(Colors.AntiqueWhite);
+            var hyperLaneBrush = Resources["ApplicationForegroundThemeBrush"] as Brush;
             var hyperLaneLines = GalacticObjectsRenderer.RenderHyperLanesAsLineList(GameState, MapCanvas.ActualWidth, MapCanvas.ActualHeight);
             foreach(var hyperLaneLine in hyperLaneLines)
             {
@@ -225,7 +253,7 @@ namespace StellarisSaveEditor
             {
                 var markedFlags = MarkSystemFlags.SelectedItems.Select(i => (i as ListBoxItem).Content as string);
                 var markedSystemCoordinates = GalacticObjectsRenderer.GetMarkedSystemCoordinates(GameState, MapCanvas.ActualWidth, MapCanvas.ActualHeight, markedFlags);
-                var markedSystemBrush = new SolidColorBrush(Colors.Turquoise);
+                var markedSystemBrush = new SolidColorBrush(Colors.DarkTurquoise);
                 foreach (var markedSystemCoordinate in markedSystemCoordinates)
                 {
                     var markedSystemShape = new Ellipse
@@ -242,6 +270,103 @@ namespace StellarisSaveEditor
                     Canvas.SetZIndex(markedSystemShape, 1000);
                 }
             }
+        }
+
+        private void UpdateGameStateRawView()
+        {
+            GameStateRawAttributes.Items.Clear();
+            GameStateRawSections.Items.Clear();
+
+            foreach (var attribute in GameState.GameStateRaw.RootSection.Attributes)
+            {
+                GameStateRawAttributes.Items.Add(new ListViewItem()
+                {
+                    Content = (string.IsNullOrEmpty(attribute.Name) ? "" : attribute.Name + ": ") + attribute.Value,
+                    DataContext = attribute
+                });
+            }
+            foreach (var rawSection in GameState.GameStateRaw.RootSection.Sections)
+            {
+                var section = new ListViewItem()
+                {
+                    Content = string.IsNullOrEmpty(rawSection.Name) ? "*" : rawSection.Name,
+                    DataContext = rawSection
+                };
+                GameStateRawSections.Items.Add(section);
+            }
+        }
+
+        private void UpdateGameStateRawSectionChildList(GameStateRawSection selectedSection)
+        {
+            GameStateRawSectionChildList.Items.Clear();
+
+            if (selectedSection == null)
+                return;
+
+            foreach (var childSection in selectedSection.Sections)
+            {
+                var section = new ListViewItem()
+                {
+                    Content = string.IsNullOrEmpty(childSection.Name) ? "*" : childSection.Name,
+                    DataContext = childSection
+                };
+                GameStateRawSectionChildList.Items.Add(section);
+            }
+
+            foreach (var attribute in selectedSection.Attributes)
+            {
+                var section = new ListViewItem()
+                {
+                    Content = (string.IsNullOrEmpty(attribute.Name) ? "" : attribute.Name + ": ") + attribute.Value,
+                    DataContext = attribute
+                };
+                GameStateRawSectionChildList.Items.Add(section);
+            }
+        }
+
+        private void UpdateGameStateRawSectionDetails(GameStateRawSection selectedSection)
+        {
+            GameStateRawSectionDetails.RootNodes.Clear();
+
+            if (selectedSection == null)
+                return;
+
+            var rootNode = new TreeViewNode { IsExpanded = true };
+            GameStateRawSectionDetails.RootNodes.Add(rootNode);
+
+            PopulateGameStateRawSectionDetails(rootNode, selectedSection);
+        }
+
+        private void PopulateGameStateRawSectionDetails(TreeViewNode node, GameStateRawSection section)
+        {
+            foreach (var childSection in section.Sections)
+            {
+                var childNode = new TreeViewNode { Content = string.IsNullOrEmpty(childSection.Name) ? "*" : childSection.Name };
+                node.Children.Add(childNode);
+                PopulateGameStateRawSectionDetails(childNode, childSection);
+            }
+
+            foreach(var attribute in section.Attributes)
+            {
+                node.Children.Add(new TreeViewNode { Content = (string.IsNullOrEmpty(attribute.Name) ? "" : attribute.Name + ": ") + attribute.Value });
+            }
+        }
+
+        private void UnloadGameState()
+        {
+            FileNameLabel.Text = "";
+            VersionLabel.Text = "";
+            SaveNameLabel.Text = "";
+            FilterPanel.Visibility = Visibility.Collapsed;
+            MapCanvas.Children.Clear();
+            StartingSystemsCanvas.Children.Clear();
+            MarkSystemFlags.Items.Clear();
+            MarkedSystemsCanvas.Children.Clear();
+            GameStateRawAttributes.Items.Clear();
+            GameStateRawSections.Items.Clear();
+            GameStateRawSectionChildList.Items.Clear();
+            GameStateRawSectionDetails.RootNodes.Clear();
+            GameState = null;
         }
     }
 }

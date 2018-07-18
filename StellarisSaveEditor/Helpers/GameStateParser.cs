@@ -121,6 +121,26 @@ namespace StellarisSaveEditor.Helpers
                     currentSection.Attributes.Add(attribute);
                 }
             }
+
+            // Post-process, since some first-level sections are actually list items (identical names)
+            var groupedSections = gameStateRaw.RootSection.Sections.GroupBy(s => s.Name).Where(g => g.Count() > 1);
+            foreach (var groupedSection in groupedSections)
+            {
+                // Create new first-level sections to hold list items
+                var section = new GameStateRawSection
+                {
+                    Parent = gameStateRaw.RootSection,
+                    Name = groupedSection.Key,
+                    FromFlattenedList = true
+                };
+                gameStateRaw.RootSection.Sections.Add(section);
+                foreach(var sectionToMove in groupedSection)
+                {
+                    sectionToMove.Parent = section;
+                    gameStateRaw.RootSection.Sections.Remove(sectionToMove);
+                    section.Sections.Add(sectionToMove);
+                }
+            }
         }
 
         private static void ParseGamestateCommon(GameState gameState)

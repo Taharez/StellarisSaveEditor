@@ -6,10 +6,9 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    RequestedTheme="Dark"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Height="720" Width="1280">
+    Height="720" Width="1280">
 
-    <Grid x:Name="MainGrid" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Grid x:Name="MainGrid">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="240"/>
             <ColumnDefinition Width="*"/>
@@ -17,7 +16,13 @@
 
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="20"/>
         </Grid.RowDefinitions>
+
+        <StackPanel x:Name="LoadingIndicatorPanel" Grid.Row="0" Grid.Column="1" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed">
+            <ProgressRing x:Name="LoadingIndicatorRing" Width="60" Height="60"/>
+            <TextBlock x:Name="LoadingIndicatorLabel" Margin="0, 10, 0, 0"/>
+        </StackPanel>
 
         <StackPanel Grid.Row="0" Grid.Column="0">
             <Button x:Name="SelectFile" x:Uid="SelectFileButton" Content="[Select file]" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" Click="SelectFile_Clicked"/>
@@ -26,19 +31,40 @@
             <TextBlock x:Name="SaveNameLabel" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" />
             <StackPanel x:Name="FilterPanel" Visibility="Collapsed">
                 <CheckBox x:Name="HighlightStartingSystem" IsChecked="True" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" Checked="HighlightStartingSystem_Checked" Unchecked="HighlightStartingSystem_Unchecked">Highlight starting system</CheckBox>
-                <ListBox x:Name="MarkSystemFlags" SelectionMode="Multiple" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200"  Height="450" Margin="0,20,0,0" SelectionChanged="MarkSystemFlags_SelectionChanged" />
+                <ListBox x:Name="MarkSystemFlags" SelectionMode="Multiple" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Enabled" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200"  Height="450" Margin="0,20,0,0" SelectionChanged="MarkSystemFlags_SelectionChanged" />
             </StackPanel>
         </StackPanel>
 
         <Pivot Name="ContentPivot" Grid.Row="0" Grid.Column="1" SelectionChanged="ContentPivot_SelectionChanged">
             <PivotItem Name="MapPivot" x:Uid="MapPivot" Header="[Galaxy map]">
                 <Canvas>
-                    <Canvas x:Name="MapCanvas" Grid.Row="0" Grid.Column="1" Width="600" Height="600" Margin="10,50,10,10" />
-                    <Canvas x:Name="StartingSystemsCanvas" Grid.Row="0" Grid.Column="1" Width="600" Height="600" Margin="10,50,10,10" />
-                    <Canvas x:Name="MarkedSystemsCanvas" Grid.Row="0" Grid.Column="1" Width="600" Height="600" Margin="10,50,10,10" />
+                    <Canvas x:Name="MapCanvas" Grid.Row="0" Grid.Column="1" Width="600" Height="600" Margin="10,20,10,10" />
+                    <Canvas x:Name="StartingSystemsCanvas" Grid.Row="0" Grid.Column="1" Width="600" Height="600" Margin="10,20,10,10" />
+                    <Canvas x:Name="MarkedSystemsCanvas" Grid.Row="0" Grid.Column="1" Width="600" Height="600" Margin="10,20,10,10" />
                 </Canvas>
             </PivotItem>
             <PivotItem Name="GameStatePivot" x:Uid="GameStatePivot" Header="[Game state]">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3*"/>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="2*"/>
+                        <ColumnDefinition Width="5*"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="30"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <TextBlock x:Uid="GameStateRawLabel" Grid.Row="0" Grid.Column="0" Text="[Raw game state]"/>
+                    
+                    <ListView x:Name="GameStateRawAttributes" Grid.Row="1" Grid.Column="0" Header="[Attributes]"/>
+                    <ListView x:Name="GameStateRawSections" Grid.Row="1" Grid.Column="1" Header="[Sections]" SelectionChanged="GameStateRawSections_SelectionChanged"/>
+                    <ListView x:Name="GameStateRawSectionChildList" Grid.Row="1" Grid.Column="2" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Enabled" Header="[Selected section nodes]" SelectionChanged="GameStateRawSectionChildList_SelectionChanged"/>
+                    <TextBlock x:Uid="GameStateRawSectinDetailsLabel" Grid.Row="1" Grid.Column="3" Text="[Selected node details]"/>
+                    <TreeView x:Name="GameStateRawSectionDetails" Grid.Row="1" Grid.Column="3" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Enabled"/>
+                </Grid>
             </PivotItem>
         </Pivot>
     </Grid>
