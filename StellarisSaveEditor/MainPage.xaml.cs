@@ -16,6 +16,7 @@ using Windows.UI;
 using Windows.UI.Xaml.Shapes;
 using System.Collections.Generic;
 using StellarisSaveEditor.Enums;
+using Windows.ApplicationModel.Resources;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -50,13 +51,27 @@ namespace StellarisSaveEditor
             UpdateStartingSystemHighlight();
         }
 
+        private void ContentPivot_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ContentPivot.SelectedItem == MapPivot && GameState != null)
+            {
+                FilterPanel.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                FilterPanel.Visibility = Visibility.Collapsed;
+            }
+        }
+
         private async void SelectFile_Clicked(object sender, RoutedEventArgs e)
         {
+            var res = ResourceLoader.GetForCurrentView();
+
             var saveFile = await LoadSaveFile();
             if (saveFile != null)
             {
-                // Application now has read/write access to the picked file
-                FileNameLabel.Text = "Opened file: " + saveFile.Name;
+                var openedFileLabel = res.GetString("OpenedFileLabel");
+                FileNameLabel.Text = string.Format(openedFileLabel, saveFile.Name);
 
                 var gamestateFile = await GetLocalGameStateCopy(saveFile);
                 if (gamestateFile != null)
@@ -77,7 +92,8 @@ namespace StellarisSaveEditor
             }
             else
             {
-                FileNameLabel.Text = "Operation cancelled.";
+                var operationCanceledLabel = res.GetString("OperationCanceledLabel");
+                FileNameLabel.Text = operationCanceledLabel;
             }
         }
 

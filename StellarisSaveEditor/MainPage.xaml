@@ -20,7 +20,7 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Grid.Column="0">
-            <Button x:Name="SelectFile" Content="Select file" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" Click="SelectFile_Clicked"/>
+            <Button x:Name="SelectFile" x:Uid="SelectFileButton" Content="[Select file]" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" Click="SelectFile_Clicked"/>
             <TextBlock x:Name="FileNameLabel" HorizontalAlignment="Center" VerticalAlignment="Top"  Width="200" Margin="0,20,0,0"/>
             <TextBlock x:Name="VersionLabel" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" />
             <TextBlock x:Name="SaveNameLabel" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" />
@@ -30,9 +30,16 @@
             </StackPanel>
         </StackPanel>
 
-        <Canvas x:Name="MapCanvas" Grid.Row="0" Grid.Column="1" Width="600" Height="600" Margin="10,50,10,10" />
-        <Canvas x:Name="StartingSystemsCanvas" Grid.Row="0" Grid.Column="1" Width="600" Height="600" Margin="10,50,10,10" />
-        <Canvas x:Name="MarkedSystemsCanvas" Grid.Row="0" Grid.Column="1" Width="600" Height="600" Margin="10,50,10,10" />
-
+        <Pivot Name="ContentPivot" Grid.Row="0" Grid.Column="1" SelectionChanged="ContentPivot_SelectionChanged">
+            <PivotItem Name="MapPivot" x:Uid="MapPivot" Header="[Galaxy map]">
+                <Canvas>
+                    <Canvas x:Name="MapCanvas" Grid.Row="0" Grid.Column="1" Width="600" Height="600" Margin="10,50,10,10" />
+                    <Canvas x:Name="StartingSystemsCanvas" Grid.Row="0" Grid.Column="1" Width="600" Height="600" Margin="10,50,10,10" />
+                    <Canvas x:Name="MarkedSystemsCanvas" Grid.Row="0" Grid.Column="1" Width="600" Height="600" Margin="10,50,10,10" />
+                </Canvas>
+            </PivotItem>
+            <PivotItem Name="GameStatePivot" x:Uid="GameStatePivot" Header="[Game state]">
+            </PivotItem>
+        </Pivot>
     </Grid>
 </Page>
