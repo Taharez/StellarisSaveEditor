@@ -126,8 +126,20 @@
   <data name="GameStatePivot.Header" xml:space="preserve">
     <value>Game state</value>
   </data>
+  <data name="GameStateRawAttributes.Header" xml:space="preserve">
+    <value>Attributes</value>
+  </data>
   <data name="GameStateRawLabel.Text" xml:space="preserve">
     <value>Raw game state data</value>
+  </data>
+  <data name="GameStateRawSectinDetailsLabel.Text" xml:space="preserve">
+    <value>Selected node details</value>
+  </data>
+  <data name="GameStateRawSectionChildList.Header" xml:space="preserve">
+    <value>Selected section nodes</value>
+  </data>
+  <data name="GameStateRawSections.Header" xml:space="preserve">
+    <value>Sections</value>
   </data>
   <data name="LoadingSaveFileLabel" xml:space="preserve">
     <value>Loading save file</value>
