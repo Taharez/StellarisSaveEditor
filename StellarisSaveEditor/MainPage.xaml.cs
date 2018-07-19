@@ -28,9 +28,31 @@ namespace StellarisSaveEditor
 
         private const double MarkedSystemRadius = 10;
 
+        private DispatcherTimer ResizeTimer = new DispatcherTimer { Interval = new TimeSpan(0, 0, 0, 0, 500)};
+
         public MainPage()
         {
             this.InitializeComponent();
+            ResizeTimer.Tick += ResizeTimerTick;
+        }
+
+        void ResizeTimerTick(object sender, object e)
+        {
+            ResizeTimer.Stop();
+
+            if (GameState != null)
+            {
+                UnloadMap();
+                UpdateMapImage();
+                UpdateStartingSystemHighlight();
+                UpdateMarkedSystems();
+            }
+        }
+
+        private void Map_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            ResizeTimer.Stop();
+            ResizeTimer.Start();
         }
 
         private void MarkSystemFlags_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -104,7 +126,9 @@ namespace StellarisSaveEditor
 
                     UpdateFilters();
 
-                    UpdateCanvasMapImage();
+                    UpdateMapImage();
+
+                    UpdateStartingSystemHighlight();
 
                     FilterPanel.Visibility = Visibility.Visible;
 
@@ -179,7 +203,7 @@ namespace StellarisSaveEditor
             }
         }
 
-        private void UpdateCanvasMapImage()
+        private void UpdateMapImage()
         {
             // Clear any old elements in map canvas
             MapCanvas.Children.Clear();
@@ -194,25 +218,29 @@ namespace StellarisSaveEditor
                 Stretch = Stretch.Fill,
                 Width = MapCanvas.ActualWidth,
                 Height = MapCanvas.ActualHeight,
-                HorizontalAlignment = HorizontalAlignment.Center
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top
             };
 
             MapCanvas.Children.Add(path);
-            Canvas.SetLeft(path, 0);
-            Canvas.SetTop(path, 0);
 
             // Hyper lanes
             var hyperLaneBrush = Resources["ApplicationForegroundThemeBrush"] as Brush;
             var hyperLaneLines = GalacticObjectsRenderer.RenderHyperLanesAsLineList(GameState, MapCanvas.ActualWidth, MapCanvas.ActualHeight);
             foreach(var hyperLaneLine in hyperLaneLines)
             {
-                var line = new Line { Stroke = hyperLaneBrush, X1 = hyperLaneLine.Item1.X, Y1 = hyperLaneLine.Item1.Y, X2 = hyperLaneLine.Item2.X, Y2 = hyperLaneLine.Item2.Y };
+                var line = new Line
+                {
+                    HorizontalAlignment= HorizontalAlignment.Left,
+                    VerticalAlignment = VerticalAlignment.Top,
+                    Stroke = hyperLaneBrush,
+                    X1 = hyperLaneLine.Item1.X,
+                    Y1 = hyperLaneLine.Item1.Y,
+                    X2 = hyperLaneLine.Item2.X,
+                    Y2 = hyperLaneLine.Item2.Y
+                };
                 MapCanvas.Children.Add(line);
-                Canvas.SetLeft(line, 0);
-                Canvas.SetTop(line, 0);
             }
-
-            UpdateStartingSystemHighlight();
         }
 
         private void UpdateStartingSystemHighlight()
@@ -232,13 +260,14 @@ namespace StellarisSaveEditor
                     Stroke = playerSystemBrush,
                     StrokeThickness = 2,
                     Width = 2 * MarkedSystemRadius,
-                    Height = 2 * MarkedSystemRadius
+                    Height = 2 * MarkedSystemRadius,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    VerticalAlignment = VerticalAlignment.Top
                 };
 
                 StartingSystemsCanvas.Children.Add(playerSystemShape);
-                Canvas.SetLeft(playerSystemShape, playerSystemCoordinate.X - MarkedSystemRadius);
-                Canvas.SetTop(playerSystemShape, playerSystemCoordinate.Y - MarkedSystemRadius);
-                Canvas.SetZIndex(playerSystemShape, 1000);
+
+                playerSystemShape.Margin = new Thickness(playerSystemCoordinate.X - MarkedSystemRadius, playerSystemCoordinate.Y - MarkedSystemRadius, 0, 0);
             }
         }
 
@@ -258,13 +287,13 @@ namespace StellarisSaveEditor
                         Stroke = markedSystemBrush,
                         StrokeThickness = 2,
                         Width = 2 * MarkedSystemRadius,
-                        Height = 2 * MarkedSystemRadius
+                        Height = 2 * MarkedSystemRadius,
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Top
                     };
 
                     MarkedSystemsCanvas.Children.Add(markedSystemShape);
-                    Canvas.SetLeft(markedSystemShape, markedSystemCoordinate.X - MarkedSystemRadius);
-                    Canvas.SetTop(markedSystemShape, markedSystemCoordinate.Y - MarkedSystemRadius);
-                    Canvas.SetZIndex(markedSystemShape, 1000);
+                    markedSystemShape.Margin = new Thickness(markedSystemCoordinate.X - MarkedSystemRadius, markedSystemCoordinate.Y - MarkedSystemRadius, 0, 0);
                 }
             }
         }
@@ -301,16 +330,21 @@ namespace StellarisSaveEditor
             GameStateRawHelpers.PopulateGameStateRawSectionDetails(rootNode, selectedSection);
         }
 
+        private void UnloadMap()
+        {
+            MapCanvas.Children.Clear();
+            StartingSystemsCanvas.Children.Clear();
+            MarkedSystemsCanvas.Children.Clear();
+        }
+
         private void UnloadGameState()
         {
             FileNameLabel.Text = "";
             VersionLabel.Text = "";
             SaveNameLabel.Text = "";
             FilterPanel.Visibility = Visibility.Collapsed;
-            MapCanvas.Children.Clear();
-            StartingSystemsCanvas.Children.Clear();
             MarkSystemFlags.Items.Clear();
-            MarkedSystemsCanvas.Children.Clear();
+            UnloadMap();
             GameStateRawAttributes.Items.Clear();
             GameStateRawSections.Items.Clear();
             GameStateRawSectionChildList.Items.Clear();
