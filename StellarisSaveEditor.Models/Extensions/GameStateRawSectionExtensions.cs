@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace StellarisSaveEditor.Extensions
+namespace StellarisSaveEditor.Models.Extensions
 {
     public static class GameStateRawSectionExtensions
     {

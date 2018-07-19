@@ -1,6 +1,4 @@
-﻿using StellarisSaveEditor.Attributes;
-
-namespace StellarisSaveEditor.Enums
+﻿namespace StellarisSaveEditor.Enums
 {
     public enum AsteroidBeltType
     {

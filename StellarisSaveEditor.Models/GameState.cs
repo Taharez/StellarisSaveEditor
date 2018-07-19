@@ -5,7 +5,7 @@ namespace StellarisSaveEditor.Models
     public class GameState
     {
         // Raw file date used to build this game state
-        public GameStateRaw GameStateRaw { get; internal set; }
+        public GameStateRaw GameStateRaw { get; set; }
 
         // Game state properties parsed from raw game state
         public string Version { get; set; }

@@ -1,22 +1,19 @@
 ﻿using System;
-using System.IO;
+using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
+using System.IO.Compression;
+using Windows.ApplicationModel.Resources;
+using Windows.Storage;
+using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.Storage;
-using System.IO.Compression;
-using Windows.UI.Xaml.Media.Imaging;
-using StellarisSaveEditor.Models;
-using StellarisSaveEditor.Helpers;
-using Windows.UI.Xaml.Markup;
 using Windows.UI.Xaml.Media;
-using Windows.UI;
 using Windows.UI.Xaml.Shapes;
-using System.Collections.Generic;
+using StellarisSaveEditor.Models;
 using StellarisSaveEditor.Enums;
-using Windows.ApplicationModel.Resources;
+using StellarisSaveEditor.Helpers;
+using StellarisSaveEditor.Parser;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -190,7 +187,7 @@ namespace StellarisSaveEditor
             // Galactic objects
             var svg = GalacticObjectsRenderer.RenderAsSvg(GameState, MapCanvas.ActualWidth, MapCanvas.ActualHeight);
 
-            var path = new Windows.UI.Xaml.Shapes.Path
+            var path = new Path
             {
                 Data = SvgXamlHelper.PathMarkupToGeometry(svg),
                 Fill = new SolidColorBrush(Colors.Blue),
@@ -277,23 +274,8 @@ namespace StellarisSaveEditor
             GameStateRawAttributes.Items.Clear();
             GameStateRawSections.Items.Clear();
 
-            foreach (var attribute in GameState.GameStateRaw.RootSection.Attributes)
-            {
-                GameStateRawAttributes.Items.Add(new ListViewItem()
-                {
-                    Content = (string.IsNullOrEmpty(attribute.Name) ? "" : attribute.Name + ": ") + attribute.Value,
-                    DataContext = attribute
-                });
-            }
-            foreach (var rawSection in GameState.GameStateRaw.RootSection.Sections)
-            {
-                var section = new ListViewItem()
-                {
-                    Content = string.IsNullOrEmpty(rawSection.Name) ? "*" : rawSection.Name,
-                    DataContext = rawSection
-                };
-                GameStateRawSections.Items.Add(section);
-            }
+            GameStateRawHelpers.PopulateGameStateRawAttributes(GameStateRawAttributes, GameState.GameStateRaw.RootSection);
+            GameStateRawHelpers.PopulateGameStateRawSections(GameStateRawSections, GameState.GameStateRaw.RootSection);
         }
 
         private void UpdateGameStateRawSectionChildList(GameStateRawSection selectedSection)
@@ -303,25 +285,7 @@ namespace StellarisSaveEditor
             if (selectedSection == null)
                 return;
 
-            foreach (var childSection in selectedSection.Sections)
-            {
-                var section = new ListViewItem()
-                {
-                    Content = string.IsNullOrEmpty(childSection.Name) ? "*" : childSection.Name,
-                    DataContext = childSection
-                };
-                GameStateRawSectionChildList.Items.Add(section);
-            }
-
-            foreach (var attribute in selectedSection.Attributes)
-            {
-                var section = new ListViewItem()
-                {
-                    Content = (string.IsNullOrEmpty(attribute.Name) ? "" : attribute.Name + ": ") + attribute.Value,
-                    DataContext = attribute
-                };
-                GameStateRawSectionChildList.Items.Add(section);
-            }
+            GameStateRawHelpers.PopulateGameStateRawSectionDetails(GameStateRawSectionChildList, selectedSection);
         }
 
         private void UpdateGameStateRawSectionDetails(GameStateRawSection selectedSection)
@@ -334,22 +298,7 @@ namespace StellarisSaveEditor
             var rootNode = new TreeViewNode { IsExpanded = true };
             GameStateRawSectionDetails.RootNodes.Add(rootNode);
 
-            PopulateGameStateRawSectionDetails(rootNode, selectedSection);
-        }
-
-        private void PopulateGameStateRawSectionDetails(TreeViewNode node, GameStateRawSection section)
-        {
-            foreach (var childSection in section.Sections)
-            {
-                var childNode = new TreeViewNode { Content = string.IsNullOrEmpty(childSection.Name) ? "*" : childSection.Name };
-                node.Children.Add(childNode);
-                PopulateGameStateRawSectionDetails(childNode, childSection);
-            }
-
-            foreach(var attribute in section.Attributes)
-            {
-                node.Children.Add(new TreeViewNode { Content = (string.IsNullOrEmpty(attribute.Name) ? "" : attribute.Name + ": ") + attribute.Value });
-            }
+            GameStateRawHelpers.PopulateGameStateRawSectionDetails(rootNode, selectedSection);
         }
 
         private void UnloadGameState()

@@ -1,13 +1,12 @@
 ﻿using System.Collections.Generic;
 using StellarisSaveEditor.Models;
-using StellarisSaveEditor.Extensions;
+using StellarisSaveEditor.Models.Extensions;
 using System;
 using System.Linq;
 using StellarisSaveEditor.Enums;
-using System.Text.RegularExpressions;
 using System.Diagnostics;
 
-namespace StellarisSaveEditor.Helpers
+namespace StellarisSaveEditor.Parser
 {
     public static class GameStateParser
     {
