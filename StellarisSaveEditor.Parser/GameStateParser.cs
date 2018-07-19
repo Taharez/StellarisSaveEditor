@@ -264,56 +264,5 @@ namespace StellarisSaveEditor.Parser
             }
         }
 
-        private static int GetSectionEndLine(List<string> gameStateText, int objectStartLine)
-        {
-            int objectEndLine = gameStateText.Count - 1;
-            int scopeCount = 0;
-            for (int i = objectStartLine; i < gameStateText.Count; ++i)
-            {
-                var line = gameStateText[i];
-                if (line.Contains("{"))
-                    ++scopeCount;
-                if (line.Contains("}"))
-                    --scopeCount;
-                if (scopeCount == 0)
-                {
-                    objectEndLine = i;
-                    break;
-                }
-            }
-            return objectEndLine;
-        }
-
-        private static int FindSectionStart(string sectionName, List<string> gameStateText, int startSearchOnLine = 0, int maxSearchToLine = 0)
-        {
-            var sectionStartLine = -1;
-            var maxLine = maxSearchToLine > 0 ? maxSearchToLine : gameStateText.Count - 1;
-            for (int i = startSearchOnLine; i <= maxLine; ++i)
-            {
-                var line = gameStateText[i];
-                if (line.TrimStart().StartsWith(sectionName + "={"))
-                {
-                    sectionStartLine = i;
-                    break;
-                }
-            }
-            return sectionStartLine;
-        }
-
-        private static int FindNextAttribute(string attributeName, List<string> gameStateText, int startSearchOnLine = 0, int maxSearchToLine = 0)
-        {
-            var sectionStartLine = -1;
-            var maxLine = maxSearchToLine > 0 ? maxSearchToLine : gameStateText.Count - 1;
-            for (int i = startSearchOnLine; i <= maxLine; ++i)
-            {
-                var line = gameStateText[i];
-                if (line.TrimStart().StartsWith(attributeName + "="))
-                {
-                    sectionStartLine = i;
-                    break;
-                }
-            }
-            return sectionStartLine;
-        }
     }
 }
