@@ -43,7 +43,8 @@ namespace StellarisSaveEditor
             if (GameState != null)
             {
                 UnloadMap();
-                UpdateMapImage();
+                UpdateMap();
+                UpdateHyperLanes();
                 UpdateStartingSystemHighlight();
                 UpdateMarkedSystems();
             }
@@ -68,6 +69,16 @@ namespace StellarisSaveEditor
         private void HighlightStartingSystem_Unchecked(object sender, RoutedEventArgs e)
         {
             UpdateStartingSystemHighlight();
+        }
+
+        private void ShowHyperLanes_Checked(object sender, RoutedEventArgs e)
+        {
+            UpdateHyperLanes();
+        }
+
+        private void ShowHyperLanes_Unchecked(object sender, RoutedEventArgs e)
+        {
+            UpdateHyperLanes();
         }
 
         private void ContentPivot_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -126,7 +137,9 @@ namespace StellarisSaveEditor
 
                     UpdateFilters();
 
-                    UpdateMapImage();
+                    UpdateMap();
+
+                    UpdateHyperLanes();
 
                     UpdateStartingSystemHighlight();
 
@@ -203,57 +216,68 @@ namespace StellarisSaveEditor
             }
         }
 
-        private void UpdateMapImage()
+        private void UpdateMap()
         {
-            // Clear any old elements in map canvas
-            MapCanvas.Children.Clear();
+            // Clear any old elements in map element
+            SystemMap.Children.Clear();
 
             // Galactic objects
-            var svg = GalacticObjectsRenderer.RenderAsSvg(GameState, MapCanvas.ActualWidth, MapCanvas.ActualHeight);
+            var svg = GalacticObjectsRenderer.RenderAsSvg(GameState, SystemMap.ActualWidth, SystemMap.ActualHeight);
 
             var path = new Path
             {
                 Data = SvgXamlHelper.PathMarkupToGeometry(svg),
                 Fill = new SolidColorBrush(Colors.Blue),
                 Stretch = Stretch.Fill,
-                Width = MapCanvas.ActualWidth,
-                Height = MapCanvas.ActualHeight,
+                Width = SystemMap.ActualWidth,
+                Height = SystemMap.ActualHeight,
                 HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Top
             };
 
-            MapCanvas.Children.Add(path);
+            SystemMap.Children.Add(path);
+        }
 
-            // Hyper lanes
-            var hyperLaneBrush = Resources["ApplicationForegroundThemeBrush"] as Brush;
-            var hyperLaneLines = GalacticObjectsRenderer.RenderHyperLanesAsLineList(GameState, MapCanvas.ActualWidth, MapCanvas.ActualHeight);
-            foreach(var hyperLaneLine in hyperLaneLines)
+        private void UpdateHyperLanes()
+        {
+            if (HyperLaneMap == null)
+                return;
+
+            HyperLaneMap.Children.Clear();
+
+            if (ShowHyperLanes.IsChecked == true)
             {
-                var line = new Line
+                var hyperLaneBrush = Resources["ApplicationForegroundThemeBrush"] as Brush;
+                var hyperLaneLines = GalacticObjectsRenderer.RenderHyperLanesAsLineList(GameState, HyperLaneMap.ActualWidth, HyperLaneMap.ActualHeight);
+                foreach (var hyperLaneLine in hyperLaneLines)
                 {
-                    HorizontalAlignment= HorizontalAlignment.Left,
-                    VerticalAlignment = VerticalAlignment.Top,
-                    Stroke = hyperLaneBrush,
-                    X1 = hyperLaneLine.Item1.X,
-                    Y1 = hyperLaneLine.Item1.Y,
-                    X2 = hyperLaneLine.Item2.X,
-                    Y2 = hyperLaneLine.Item2.Y
-                };
-                MapCanvas.Children.Add(line);
+                    var line = new Line
+                    {
+
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Top,
+                        Stroke = hyperLaneBrush,
+                        X1 = hyperLaneLine.Item1.X,
+                        Y1 = hyperLaneLine.Item1.Y,
+                        X2 = hyperLaneLine.Item2.X,
+                        Y2 = hyperLaneLine.Item2.Y
+                    };
+                    HyperLaneMap.Children.Add(line);
+                }
             }
         }
 
         private void UpdateStartingSystemHighlight()
         {
-            if (StartingSystemsCanvas == null)
+            if (StartingSystemsMap == null)
                 return;
 
-            StartingSystemsCanvas.Children.Clear();
+            StartingSystemsMap.Children.Clear();
             
             // Player system
             if (HighlightStartingSystem.IsChecked == true)
             {
-                var playerSystemCoordinate = GalacticObjectsRenderer.GetPlayerSystemCoordinates(GameState, MapCanvas.ActualWidth, MapCanvas.ActualHeight);
+                var playerSystemCoordinate = GalacticObjectsRenderer.GetPlayerSystemCoordinates(GameState, StartingSystemsMap.ActualWidth, StartingSystemsMap.ActualHeight);
                 var playerSystemBrush = new SolidColorBrush(Colors.OrangeRed);
                 var playerSystemShape = new Ellipse
                 {
@@ -265,7 +289,7 @@ namespace StellarisSaveEditor
                     VerticalAlignment = VerticalAlignment.Top
                 };
 
-                StartingSystemsCanvas.Children.Add(playerSystemShape);
+                StartingSystemsMap.Children.Add(playerSystemShape);
 
                 playerSystemShape.Margin = new Thickness(playerSystemCoordinate.X - MarkedSystemRadius, playerSystemCoordinate.Y - MarkedSystemRadius, 0, 0);
             }
@@ -273,12 +297,12 @@ namespace StellarisSaveEditor
 
         private void UpdateMarkedSystems()
         {
-            MarkedSystemsCanvas.Children.Clear();
+            MarkedSystemsMap.Children.Clear();
 
             if (MarkSystemFlags.SelectedItem != null)
             {
                 var markedFlags = MarkSystemFlags.SelectedItems.Select(i => (i as ListBoxItem).Content as string);
-                var markedSystemCoordinates = GalacticObjectsRenderer.GetMarkedSystemCoordinates(GameState, MapCanvas.ActualWidth, MapCanvas.ActualHeight, markedFlags);
+                var markedSystemCoordinates = GalacticObjectsRenderer.GetMarkedSystemCoordinates(GameState, MarkedSystemsMap.ActualWidth, MarkedSystemsMap.ActualHeight, markedFlags);
                 var markedSystemBrush = new SolidColorBrush(Colors.DarkTurquoise);
                 foreach (var markedSystemCoordinate in markedSystemCoordinates)
                 {
@@ -292,7 +316,7 @@ namespace StellarisSaveEditor
                         VerticalAlignment = VerticalAlignment.Top
                     };
 
-                    MarkedSystemsCanvas.Children.Add(markedSystemShape);
+                    MarkedSystemsMap.Children.Add(markedSystemShape);
                     markedSystemShape.Margin = new Thickness(markedSystemCoordinate.X - MarkedSystemRadius, markedSystemCoordinate.Y - MarkedSystemRadius, 0, 0);
                 }
             }
@@ -332,9 +356,10 @@ namespace StellarisSaveEditor
 
         private void UnloadMap()
         {
-            MapCanvas.Children.Clear();
-            StartingSystemsCanvas.Children.Clear();
-            MarkedSystemsCanvas.Children.Clear();
+            SystemMap.Children.Clear();
+            HyperLaneMap.Children.Clear();
+            StartingSystemsMap.Children.Clear();
+            MarkedSystemsMap.Children.Clear();
         }
 
         private void UnloadGameState()
