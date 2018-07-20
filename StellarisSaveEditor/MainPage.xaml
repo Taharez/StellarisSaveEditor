@@ -76,11 +76,11 @@
                     
                     <TextBlock x:Uid="GameStateRawLabel" Grid.Row="0" Grid.Column="0" Text="[Raw game state]"/>
 
-                    <ListView x:Uid="GameStateRawAttributes" x:Name="GameStateRawAttributes" Grid.Row="1" Grid.Column="0" Header="[Attributes]"/>
-                    <ListView x:Uid="GameStateRawSections" x:Name="GameStateRawSections" Grid.Row="1" Grid.Column="1" Header="[Sections]" SelectionChanged="GameStateRawSections_SelectionChanged"/>
-                    <ListView x:Uid="GameStateRawSectionChildList" x:Name="GameStateRawSectionChildList" Grid.Row="1" Grid.Column="2" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Enabled" Header="[Selected section nodes]" SelectionChanged="GameStateRawSectionChildList_SelectionChanged"/>
-                    <TextBlock x:Uid="GameStateRawSectinDetailsLabel" Grid.Row="1" Grid.Column="3" Text="[Selected node details]"/>
-                    <TreeView x:Name="GameStateRawSectionDetails" Grid.Row="1" Grid.Column="3" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Enabled"/>
+                    <ListView x:Uid="GameStateRawAttributes" x:Name="GameStateRawAttributes" Grid.Row="1" Grid.Column="0" Margin="10, 0, 0, 0" Header="[Attributes]"/>
+                    <ListView x:Uid="GameStateRawSections" x:Name="GameStateRawSections" Grid.Row="1" Grid.Column="1" Margin="10, 0, 0, 0" Header="[Sections]" SelectionChanged="GameStateRawSections_SelectionChanged"/>
+                    <ListView x:Uid="GameStateRawSectionChildList" x:Name="GameStateRawSectionChildList" Grid.Row="1" Grid.Column="2" Margin="10, 0, 0, 0" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Enabled" Header="[Selected section nodes]" SelectionChanged="GameStateRawSectionChildList_SelectionChanged"/>
+                    <TextBlock x:Uid="GameStateRawSectinDetailsLabel" Grid.Row="1" Grid.Column="3" Margin="10, 0, 0, 0" Text="[Selected node details]"/>
+                    <TreeView x:Name="GameStateRawSectionDetails" Grid.Row="1" Grid.Column="3" Margin="10, 18, 0, 0" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Enabled"/>
                 </Grid>
             </PivotItem>
         </Pivot>
