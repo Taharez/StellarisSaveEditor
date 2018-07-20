@@ -137,11 +137,11 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\StellarisSaveEditor.Models\StellarisSaveEditor.Models.csproj">
-      <Project>{3aba7a42-69c9-4355-9fbd-d50a93b8911f}</Project>
+      <Project>{64762b2b-9202-4395-9b12-55b3b9b0e8d3}</Project>
       <Name>StellarisSaveEditor.Models</Name>
     </ProjectReference>
     <ProjectReference Include="..\StellarisSaveEditor.Parser\StellarisSaveEditor.Parser.csproj">
-      <Project>{3dc80bc2-2308-4d14-801d-d6acfc4f1c68}</Project>
+      <Project>{3a629335-bc30-4400-a4d9-a404c0f9f23b}</Project>
       <Name>StellarisSaveEditor.Parser</Name>
     </ProjectReference>
   </ItemGroup>
