@@ -141,6 +141,12 @@
   <data name="GameStateRawSections.Header" xml:space="preserve">
     <value>Sections</value>
   </data>
+  <data name="HighlightStartingSystem.Content" xml:space="preserve">
+    <value>Highlight starting system</value>
+  </data>
+  <data name="HightLightSystemName.PlaceholderText" xml:space="preserve">
+    <value>System name</value>
+  </data>
   <data name="LoadingSaveFileLabel" xml:space="preserve">
     <value>Loading save file</value>
   </data>
@@ -158,6 +164,9 @@
   </data>
   <data name="SelectFileButton.Content" xml:space="preserve">
     <value>Select file</value>
+  </data>
+  <data name="ShowHyperLanes.Content" xml:space="preserve">
+    <value>Show hyperlanes</value>
   </data>
   <data name="UpdatingGameStateLabel" xml:space="preserve">
     <value>Loading game state</value>

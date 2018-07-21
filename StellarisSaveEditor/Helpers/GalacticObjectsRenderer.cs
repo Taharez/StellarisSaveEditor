@@ -76,6 +76,18 @@ namespace StellarisSaveEditor.Helpers
             return markedSystemCoordinates;
         }
 
+        public static List<Point> GetMatchingNameSystemCoordinates(GameState gameState, double mapWidth, double mapHeight, string name)
+        {
+            var matchingNameSystemCoordinates = new List<Point>();
+            var matchingNameSystems = gameState.GalacticObjects.Where(o => o.Name.ToLower().StartsWith(name));
+            var mapSettings = GetMapSettings(gameState, mapWidth, mapHeight);
+            foreach (var matchingNameSystem in matchingNameSystems)
+            {
+                matchingNameSystemCoordinates.Add(GetModifiedCoordinate(mapSettings, matchingNameSystem.Coordinate));
+            }
+            return matchingNameSystemCoordinates;
+        }
+
         private static Point GetModifiedCoordinate(MapSettings mapSettings, GalacticObjectCoordinate coordinate)
         {
             return new Point(

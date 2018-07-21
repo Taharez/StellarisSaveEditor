@@ -51,7 +51,7 @@ namespace StellarisSaveEditor
                 UnloadMap();
                 UpdateMap();
                 UpdateHyperLanes();
-                UpdateStartingSystemHighlight();
+                UpdateSystemHighlight();
                 UpdateMarkedSystems();
             }
         }
@@ -62,19 +62,24 @@ namespace StellarisSaveEditor
             _resizeTimer.Start();
         }
 
-        private void MarkSystemFlags_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void HightLightSystemName_TextChanged(object sender, TextChangedEventArgs e)
         {
-            UpdateMarkedSystems();
+            UpdateSystemHighlight();
         }
 
         private void HighlightStartingSystem_Checked(object sender, RoutedEventArgs e)
         {
-            UpdateStartingSystemHighlight();
+            UpdateSystemHighlight();
         }
 
         private void HighlightStartingSystem_Unchecked(object sender, RoutedEventArgs e)
         {
-            UpdateStartingSystemHighlight();
+            UpdateSystemHighlight();
+        }
+
+        private void MarkSystemFlags_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            UpdateMarkedSystems();
         }
 
         private void ShowHyperLanes_Checked(object sender, RoutedEventArgs e)
@@ -148,7 +153,7 @@ namespace StellarisSaveEditor
 
                     UpdateHyperLanes();
 
-                    UpdateStartingSystemHighlight();
+                    UpdateSystemHighlight();
 
                     FilterPanel.Visibility = Visibility.Visible;
 
@@ -276,17 +281,17 @@ namespace StellarisSaveEditor
             }
         }
 
-        private void UpdateStartingSystemHighlight()
+        private void UpdateSystemHighlight()
         {
-            if (StartingSystemsMap == null)
+            if (SystemHightlightMap == null)
                 return;
 
-            StartingSystemsMap.Children.Clear();
+            SystemHightlightMap.Children.Clear();
             
             // Player system
             if (HighlightStartingSystem.IsChecked == true)
             {
-                var playerSystemCoordinate = GalacticObjectsRenderer.GetPlayerSystemCoordinates(GameState, StartingSystemsMap.ActualWidth, StartingSystemsMap.ActualHeight);
+                var playerSystemCoordinate = GalacticObjectsRenderer.GetPlayerSystemCoordinates(GameState, SystemHightlightMap.ActualWidth, SystemHightlightMap.ActualHeight);
                 var playerSystemBrush = new SolidColorBrush(Colors.OrangeRed);
                 var playerSystemShape = new Ellipse
                 {
@@ -298,9 +303,31 @@ namespace StellarisSaveEditor
                     VerticalAlignment = VerticalAlignment.Top
                 };
 
-                StartingSystemsMap.Children.Add(playerSystemShape);
+                SystemHightlightMap.Children.Add(playerSystemShape);
 
                 playerSystemShape.Margin = new Thickness(playerSystemCoordinate.X - MarkedSystemRadius, playerSystemCoordinate.Y - MarkedSystemRadius, 0, 0);
+            }
+
+            // Searched systems
+            if (!String.IsNullOrEmpty(HightLightSystemName.Text))
+            {
+                var highlightedSystemCoordinates = GalacticObjectsRenderer.GetMatchingNameSystemCoordinates(GameState, MarkedSystemsMap.ActualWidth, MarkedSystemsMap.ActualHeight, HightLightSystemName.Text.ToLower());
+                var highlightedSystemBrush = Resources["ApplicationForegroundThemeBrush"] as Brush;
+                foreach (var highlightedSystemCoordinate in highlightedSystemCoordinates)
+                {
+                    var highlightedSystemShape = new Ellipse
+                    {
+                        Stroke = highlightedSystemBrush,
+                        StrokeThickness = 2,
+                        Width = 2 * MarkedSystemRadius,
+                        Height = 2 * MarkedSystemRadius,
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Top
+                    };
+
+                    SystemHightlightMap.Children.Add(highlightedSystemShape);
+                    highlightedSystemShape.Margin = new Thickness(highlightedSystemCoordinate.X - MarkedSystemRadius, highlightedSystemCoordinate.Y - MarkedSystemRadius, 0, 0);
+                }
             }
         }
 
@@ -367,7 +394,7 @@ namespace StellarisSaveEditor
         {
             SystemMap.Children.Clear();
             HyperLaneMap.Children.Clear();
-            StartingSystemsMap.Children.Clear();
+            SystemHightlightMap.Children.Clear();
             MarkedSystemsMap.Children.Clear();
         }
 
