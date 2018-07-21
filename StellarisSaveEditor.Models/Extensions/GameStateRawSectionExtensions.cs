@@ -23,7 +23,8 @@ namespace StellarisSaveEditor.Models.Extensions
 
         public static string GetAttributeValueByName(this GameStateRawSection gameStateRawSection, string attributeName)
         {
-            return gameStateRawSection.GetAttributeByName(attributeName).Value;
+            var attribute = gameStateRawSection.GetAttributeByName(attributeName);
+            return attribute != null ? attribute.Value : "";
         }
 
         public static List<string> GetAttributeValuesByName(this GameStateRawSection gameStateRawSection, string attributeName)
