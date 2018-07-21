@@ -1,6 +1,4 @@
-﻿using StellarisSaveEditor.Enums;
-
-namespace StellarisSaveEditor.Models
+﻿namespace StellarisSaveEditor.Models
 {
     public class GameStateRawAttribute
     {

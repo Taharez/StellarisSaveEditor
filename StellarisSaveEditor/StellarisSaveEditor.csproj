@@ -98,6 +98,7 @@
     <Compile Include="Helpers\GalacticObjectsRenderer.cs" />
     <Compile Include="Helpers\GameStateRawHelpers.cs" />
     <Compile Include="Helpers\SvgXamlHelper.cs" />
+    <Compile Include="Helpers\UWPLogger.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
@@ -136,6 +137,10 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\StellarisSaveEditor.Common\StellarisSaveEditor.Common.csproj">
+      <Project>{cc41ecbf-04b4-40d8-8c8c-3729620f1a42}</Project>
+      <Name>StellarisSaveEditor.Common</Name>
+    </ProjectReference>
     <ProjectReference Include="..\StellarisSaveEditor.Models\StellarisSaveEditor.Models.csproj">
       <Project>{64762b2b-9202-4395-9b12-55b3b9b0e8d3}</Project>
       <Name>StellarisSaveEditor.Models</Name>

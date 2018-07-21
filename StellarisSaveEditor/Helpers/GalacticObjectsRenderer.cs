@@ -4,7 +4,6 @@ using System.Linq;
 using Windows.Foundation;
 using StellarisSaveEditor.Models;
 using System.Text;
-using StellarisSaveEditor.Enums;
 
 namespace StellarisSaveEditor.Helpers
 {
@@ -67,9 +66,8 @@ namespace StellarisSaveEditor.Helpers
 
         public static List<Point> GetMarkedSystemCoordinates(GameState gameState, double mapWidth, double mapHeight, IEnumerable<string> markedFlags)
         {
-            var markedSystemFlags = markedFlags.Select(f => Enum.Parse(typeof(GalacticObjectFlag), f));
             var markedSystemCoordinates = new List<Point>();
-            var markedSystems = gameState.GalacticObjects.Where(o => o.GalacticObjectFlags.Any(f => markedSystemFlags.Contains(f)));
+            var markedSystems = gameState.GalacticObjects.Where(o => o.GalacticObjectFlags.Any(f => markedFlags.Contains(f)));
             var mapSettings = GetMapSettings(gameState, mapWidth, mapHeight);
             foreach (var markedSystem in markedSystems)
             {

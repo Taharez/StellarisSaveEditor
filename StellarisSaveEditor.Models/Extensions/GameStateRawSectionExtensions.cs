@@ -1,5 +1,4 @@
-﻿using StellarisSaveEditor.Models;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace StellarisSaveEditor.Models.Extensions

@@ -1,21 +1,29 @@
 ﻿using System.Collections.Generic;
-using StellarisSaveEditor.Models;
-using StellarisSaveEditor.Models.Extensions;
 using System;
 using System.Linq;
-using StellarisSaveEditor.Enums;
-using System.Diagnostics;
+using StellarisSaveEditor.Models;
+using StellarisSaveEditor.Models.Enums;
+using StellarisSaveEditor.Models.Extensions;
+using StellarisSaveEditor.Common;
 
 namespace StellarisSaveEditor.Parser
 {
-    public static class GameStateParser
+    public class GameStateParser
     {
-        public static GameState ParseGamestate(List<string> gameStateText)
+        private readonly ILogger _logger;
+
+        public GameStateParser(ILogger logger)
+        {
+            _logger = logger;
+        }
+
+        public GameState ParseGamestate(List<string> gameStateText)
         {
             var gameStateRaw = new GameStateRaw();
             var gameState = new GameState() { GameStateRaw = gameStateRaw };
 
-            ParseGamestateRaw(gameStateRaw, gameStateText);
+            var rawParser = new GameStateRawParser(_logger);
+            rawParser.ParseGamestateRaw(gameStateRaw, gameStateText);
             
             ParseGamestateCommon(gameState);
 
@@ -26,123 +34,7 @@ namespace StellarisSaveEditor.Parser
             return gameState;
         }
 
-        private static void ParseGamestateRaw(GameStateRaw gameStateRaw, List<string> gameStateText)
-        {
-            gameStateRaw.RootSection = new GameStateRawSection() // Container for all top-level sections and attributes
-            {
-                Name = "Root"
-            };
-            var currentSection = gameStateRaw.RootSection;
-            for (int i = 0; i < gameStateText.Count; ++i)
-            {
-                var currentLine = gameStateText[i].Trim();
-                if (String.IsNullOrWhiteSpace(currentLine))
-                {
-                    // Skip blank lines
-                    continue;
-                }
-                else if (currentLine.Contains("={"))
-                {
-                    // Named section start
-                    var sectionName = currentLine.Substring(0, currentLine.IndexOf("={"));
-                    var section = new GameStateRawSection
-                    {
-                        Parent = currentSection,
-                        Name = sectionName
-                    };
-                    currentSection.Sections.Add(section);
-                    // Check for single-line section/list
-                    if (currentLine.Contains("}"))
-                    {
-                        var valueStartIndex = currentLine.IndexOf("={") + 2;
-                        var valueEndIndex = currentLine.IndexOf("}") - 1;
-                        var attributeValue = currentLine.Substring(valueStartIndex, valueEndIndex - valueStartIndex).Trim();
-                        var attribute = new GameStateRawAttribute
-                        {
-                            Parent = currentSection,
-                            Name = null,
-                            Value = attributeValue
-                        };
-                        section.Attributes.Add(attribute);
-                    }
-                    else
-                    {
-                        // Start of new section, update current section until end of scope
-                        currentSection = section;
-                    }
-                }
-                else if (currentLine.Contains("{"))
-                {
-                    // Unnamed section start
-                    var section = new GameStateRawSection
-                    {
-                        Parent = currentSection,
-                        Name = null
-                    };
-                    currentSection.Sections.Add(section);
-                    currentSection = section;
-                }
-                else if (currentLine.Contains("}"))
-                {
-                    // Section close
-                    if (currentSection.Parent == null)
-                    {
-                        Debug.Assert(i == gameStateText.Count - 1);
-                    }
-                    else
-                    {
-                        currentSection = currentSection.Parent;
-                    }                            
-                }
-                else if (currentLine.Contains("="))
-                {
-                    // Attribute
-                    var attributeName = currentLine.Substring(0, currentLine.IndexOf("="));
-                    var attributeValue = currentLine.Substring(currentLine.IndexOf("=") + 1).Trim('\"');
-                    var attribute = new GameStateRawAttribute
-                    {
-                        Parent = currentSection,
-                        Name = attributeName,
-                        Value = attributeValue
-                    };
-                    currentSection.Attributes.Add(attribute);
-                }
-                else
-                {
-                    // Unnamed attribute/list item
-                    var attributeValue = currentLine;
-                    var attribute = new GameStateRawAttribute
-                    {
-                        Parent = currentSection,
-                        Name = null,
-                        Value = attributeValue
-                    };
-                    currentSection.Attributes.Add(attribute);
-                }
-            }
-
-            // Post-process, since some first-level sections are actually list items (identical names)
-            var groupedSections = gameStateRaw.RootSection.Sections.GroupBy(s => s.Name).Where(g => g.Count() > 1);
-            foreach (var groupedSection in groupedSections)
-            {
-                // Create new first-level sections to hold list items
-                var section = new GameStateRawSection
-                {
-                    Parent = gameStateRaw.RootSection,
-                    Name = groupedSection.Key,
-                    FromFlattenedList = true
-                };
-                gameStateRaw.RootSection.Sections.Add(section);
-                foreach(var sectionToMove in groupedSection)
-                {
-                    sectionToMove.Parent = section;
-                    gameStateRaw.RootSection.Sections.Remove(sectionToMove);
-                    section.Sections.Add(sectionToMove);
-                }
-            }
-        }
-
-        private static void ParseGamestateCommon(GameState gameState)
+        private void ParseGamestateCommon(GameState gameState)
         {
             var gameStateRaw = gameState.GameStateRaw;
             
@@ -158,7 +50,7 @@ namespace StellarisSaveEditor.Parser
             gameState.Player.CountryIndex = playerCountryIndex;
         }
 
-        private static void ParseGamestateGalacticObjects(GameState gameState)
+        private void ParseGamestateGalacticObjects(GameState gameState)
         {
             var gameStateRaw = gameState.GameStateRaw;
 
@@ -186,8 +78,14 @@ namespace StellarisSaveEditor.Parser
 
                 // Type and name
                 GalacticObjectType type;
-                Enum.TryParse(galacticObjectItem.GetAttributeValueByName("type"), out type);
-                galacticObject.Type = type;
+                var typeString = galacticObjectItem.GetAttributeValueByName("type");
+                Enum.TryParse(typeString, out type);
+                if (type == GalacticObjectType.unknown)
+                {
+                    // Log unknown flag
+                    _logger.Log(LogLevel.Information, "Unknown galactic object type: " + typeString);
+                }
+                galacticObject.Type = typeString;
                 galacticObject.Name = galacticObjectItem.GetAttributeValueByName("name");
 
                 // Planets 
@@ -202,8 +100,14 @@ namespace StellarisSaveEditor.Parser
 
                 // Star class
                 StarClass starClass;
-                Enum.TryParse(galacticObjectItem.GetAttributeValueByName("star_class"), out starClass);
-                galacticObject.StarClass = starClass;
+                var starClassString = galacticObjectItem.GetAttributeValueByName("star_class");
+                Enum.TryParse(starClassString, out starClass);
+                if (starClass == StarClass.unknown)
+                {
+                    // Log unknown flag
+                    _logger.Log(LogLevel.Information, "Unknown star class: " + starClassString);
+                }
+                galacticObject.StarClass = starClassString;
 
                 // Hyper lanes
                 galacticObject.HyperLanes = new List<HyperLane>();
@@ -224,7 +128,7 @@ namespace StellarisSaveEditor.Parser
                 }
 
                 // Flags
-                galacticObject.GalacticObjectFlags = new List<GalacticObjectFlag>();
+                galacticObject.GalacticObjectFlags = new List<string>();
                 var flagsSection = galacticObjectItem.GetChildSectionByName("flags");
                 if (flagsSection != null)
                 {
@@ -232,7 +136,12 @@ namespace StellarisSaveEditor.Parser
                     {
                         GalacticObjectFlag flag;
                         Enum.TryParse(flagAttribute.Name, out flag);
-                        galacticObject.GalacticObjectFlags.Add(flag);
+                        if (flag == GalacticObjectFlag.unknown)
+                        {
+                            // Log unknown flag
+                            _logger.Log(LogLevel.Information, "Unknown galactic object flag: " + flagAttribute.Name);
+                        }
+                        galacticObject.GalacticObjectFlags.Add(flagAttribute.Name);
                     }
                 }
 
@@ -240,7 +149,7 @@ namespace StellarisSaveEditor.Parser
             }
         }
 
-        private static void ParseGamestateCountries(GameState gameState)
+        private void ParseGamestateCountries(GameState gameState)
         {
             var gameStateRaw = gameState.GameStateRaw;
 

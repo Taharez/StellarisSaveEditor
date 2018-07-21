@@ -11,9 +11,11 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Shapes;
 using StellarisSaveEditor.Models;
-using StellarisSaveEditor.Enums;
+using StellarisSaveEditor.Models.Enums;
+using StellarisSaveEditor.Common;
 using StellarisSaveEditor.Helpers;
 using StellarisSaveEditor.Parser;
+using Windows.UI.Core;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -28,17 +30,21 @@ namespace StellarisSaveEditor
 
         private const double MarkedSystemRadius = 10;
 
-        private DispatcherTimer ResizeTimer = new DispatcherTimer { Interval = new TimeSpan(0, 0, 0, 0, 500)};
+        private DispatcherTimer _resizeTimer;
+
+        private readonly ILogger _logger;
 
         public MainPage()
         {
             this.InitializeComponent();
-            ResizeTimer.Tick += ResizeTimerTick;
+            _resizeTimer = new DispatcherTimer { Interval = new TimeSpan(0, 0, 0, 0, 500) };
+            _resizeTimer.Tick += ResizeTimerTick;
+            _logger = new UwpLogger();
         }
 
         void ResizeTimerTick(object sender, object e)
         {
-            ResizeTimer.Stop();
+            _resizeTimer.Stop();
 
             if (GameState != null)
             {
@@ -52,8 +58,8 @@ namespace StellarisSaveEditor
 
         private void Map_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            ResizeTimer.Stop();
-            ResizeTimer.Start();
+            _resizeTimer.Stop();
+            _resizeTimer.Start();
         }
 
         private void MarkSystemFlags_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -130,7 +136,8 @@ namespace StellarisSaveEditor
                 {
                     var gamestateText = await FileIO.ReadLinesAsync(gamestateFile);
 
-                    GameState = GameStateParser.ParseGamestate(gamestateText.ToList());
+                    var parser = new GameStateParser(_logger);
+                    GameState = parser.ParseGamestate(gamestateText.ToList());
 
                     VersionLabel.Text = GameState.Version;
                     SaveNameLabel.Text = GameState.Name;
@@ -157,6 +164,7 @@ namespace StellarisSaveEditor
                 FileNameLabel.Text = operationCanceledLabel;
             }
             SelectFile.IsEnabled = true;
+            await _logger.SaveAsync();
         }
 
         private async Task<StorageFile> LoadSaveFile()
@@ -204,8 +212,9 @@ namespace StellarisSaveEditor
         private void UpdateFilters()
         {
             MarkSystemFlags.Items.Clear();
-            var systemFlags = Enum.GetNames(typeof(GalacticObjectFlag));
-            var presentSystemFlags = GameState.GalacticObjects.SelectMany(o => o.GalacticObjectFlags != null ? o.GalacticObjectFlags : new List<Enums.GalacticObjectFlag>()).Distinct().Select(f => f.ToString()).ToList();
+            var systemFlags = Enum.GetNames(typeof(GalacticObjectFlag)).ToList();
+            var presentSystemFlags = GameState.GalacticObjects.SelectMany(o => o.GalacticObjectFlags != null ? o.GalacticObjectFlags : new List<string>()).Distinct().ToList();
+            systemFlags = systemFlags.Union(presentSystemFlags).ToList(); // Make sure we use all flags in file, even if they are unknown (not in enum)
             foreach (var systemFlag in systemFlags)
             {
                 MarkSystemFlags.Items.Add(new ListBoxItem

@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using StellarisSaveEditor.Enums;
 
 namespace StellarisSaveEditor.Models
 {
@@ -7,7 +6,7 @@ namespace StellarisSaveEditor.Models
     {
         public GalacticObjectCoordinate Coordinate { get; set; }
 
-        public GalacticObjectType Type { get; set; }
+        public string Type { get; set; }
 
         public string Name { get; set; }
 
@@ -15,13 +14,13 @@ namespace StellarisSaveEditor.Models
 
         public List<int> AmbientObjects { get; set; }
 
-        public StarClass StarClass { get; set; }
+        public string StarClass { get; set; }
 
         public List<HyperLane> HyperLanes { get; set; }
 
         public List<AsteroidBelt> AsteroidBelts { get; set; }
 
-        public List<GalacticObjectFlag> GalacticObjectFlags { get; set; }
+        public List<string> GalacticObjectFlags { get; set; }
 
         public string Initializer { get; set; }
 

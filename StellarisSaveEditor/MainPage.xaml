@@ -39,11 +39,13 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <CheckBox x:Name="HighlightStartingSystem" Grid.Row="0" IsChecked="True" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" Checked="HighlightStartingSystem_Checked" Unchecked="HighlightStartingSystem_Unchecked">Highlight starting system</CheckBox>
-                <CheckBox x:Name="ShowHyperLanes" Grid.Row="1" IsChecked="True" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" Checked="ShowHyperLanes_Checked" Unchecked="ShowHyperLanes_Unchecked">Show hyperlanes</CheckBox>
-                <ListBox x:Name="MarkSystemFlags" Grid.Row="2" SelectionMode="Multiple" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Enabled" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" SelectionChanged="MarkSystemFlags_SelectionChanged" />
+                <CheckBox x:Name="HighlightStartingSystem" Grid.Row="0" IsChecked="True" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" Checked="HighlightStartingSystem_Checked" Unchecked="HighlightStartingSystem_Unchecked" Content="[Highlight starting system]"/>
+                <CheckBox x:Name="ShowHyperLanes" Grid.Row="1" IsChecked="True" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" Checked="ShowHyperLanes_Checked" Unchecked="ShowHyperLanes_Unchecked" Content="[Show hyperlanes]"/>
+                <TextBox x:Name="HightLightSystemName" Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" />
+                <ListBox x:Name="MarkSystemFlags" Grid.Row="3" SelectionMode="Multiple" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Enabled" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" SelectionChanged="MarkSystemFlags_SelectionChanged" />
             </Grid>
         </Grid>
 

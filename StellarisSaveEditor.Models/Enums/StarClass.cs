@@ -1,4 +1,4 @@
-﻿namespace StellarisSaveEditor.Enums
+﻿namespace StellarisSaveEditor.Models.Enums
 {
     public enum StarClass
     {
