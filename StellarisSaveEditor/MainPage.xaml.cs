@@ -32,14 +32,11 @@ namespace StellarisSaveEditor
 
         private DispatcherTimer _resizeTimer;
 
-        private readonly ILogger _logger;
-
         public MainPage()
         {
             this.InitializeComponent();
             _resizeTimer = new DispatcherTimer { Interval = new TimeSpan(0, 0, 0, 0, 500) };
             _resizeTimer.Tick += ResizeTimerTick;
-            _logger = new UwpLogger();
         }
 
         void ResizeTimerTick(object sender, object e)
@@ -124,52 +121,57 @@ namespace StellarisSaveEditor
 
             var res = ResourceLoader.GetForCurrentView();
 
-            var saveFile = await LoadSaveFile();
-            if (saveFile != null)
+            using (var logger = new UwpLogger())
             {
-                UnloadGameState();
 
-                LoadingIndicatorRing.IsActive = true;
-                LoadingIndicatorLabel.Text = res.GetString("LoadingSaveFileLabel");
-                LoadingIndicatorPanel.Visibility = Visibility.Visible;
-
-                var openedFileLabel = res.GetString("OpenedFileLabel");
-                FileNameLabel.Text = string.Format(openedFileLabel, saveFile.Name);
-
-                var gamestateFile = await GetLocalGameStateCopy(saveFile);
-                if (gamestateFile != null)
+                var saveFile = await LoadSaveFile();
+                if (saveFile != null)
                 {
-                    var gamestateText = await FileIO.ReadLinesAsync(gamestateFile);
 
-                    var parser = new GameStateParser(_logger);
-                    GameState = parser.ParseGamestate(gamestateText.ToList());
+                    UnloadGameState();
 
-                    VersionLabel.Text = GameState.Version;
-                    SaveNameLabel.Text = GameState.Name;
+                    LoadingIndicatorRing.IsActive = true;
+                    LoadingIndicatorLabel.Text = res.GetString("LoadingSaveFileLabel");
+                    LoadingIndicatorPanel.Visibility = Visibility.Visible;
 
-                    UpdateFilters();
+                    var openedFileLabel = res.GetString("OpenedFileLabel");
+                    FileNameLabel.Text = string.Format(openedFileLabel, saveFile.Name);
 
-                    UpdateMap();
+                    var gamestateFile = await GetLocalGameStateCopy(saveFile);
+                    if (gamestateFile != null)
+                    {
+                        var gamestateText = await FileIO.ReadLinesAsync(gamestateFile);
 
-                    UpdateHyperLanes();
+                        var parser = new GameStateParser(logger);
+                        GameState = parser.ParseGamestate(gamestateText.ToList());
 
-                    UpdateSystemHighlight();
+                        VersionLabel.Text = GameState.Version;
+                        SaveNameLabel.Text = GameState.Name;
 
-                    FilterPanel.Visibility = Visibility.Visible;
+                        UpdateFilters();
 
-                    UpdateGameStateRawView();
+                        UpdateMap();
 
-                    LoadingIndicatorPanel.Visibility = Visibility.Collapsed;
-                    LoadingIndicatorRing.IsActive = false;
+                        UpdateHyperLanes();
+
+                        UpdateSystemHighlight();
+
+                        FilterPanel.Visibility = Visibility.Visible;
+
+                        UpdateGameStateRawView();
+
+                        LoadingIndicatorPanel.Visibility = Visibility.Collapsed;
+                        LoadingIndicatorRing.IsActive = false;
+                    }
                 }
+                else
+                {
+                    var operationCanceledLabel = res.GetString("OperationCanceledLabel");
+                    FileNameLabel.Text = operationCanceledLabel;
+                }
+                SelectFile.IsEnabled = true;
+                await logger.SaveAsync();
             }
-            else
-            {
-                var operationCanceledLabel = res.GetString("OperationCanceledLabel");
-                FileNameLabel.Text = operationCanceledLabel;
-            }
-            SelectFile.IsEnabled = true;
-            await _logger.SaveAsync();
         }
 
         private async Task<StorageFile> LoadSaveFile()
