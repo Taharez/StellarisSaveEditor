@@ -1,4 +1,6 @@
-﻿namespace StellarisSaveEditor.Models.Enums
+﻿// ReSharper disable InconsistentNaming
+// ReSharper disable UnusedMember.Global
+namespace StellarisSaveEditor.Models.Enums
 {
     public enum StarClass
     {

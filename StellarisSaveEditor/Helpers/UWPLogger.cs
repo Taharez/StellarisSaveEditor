@@ -7,8 +7,8 @@ namespace StellarisSaveEditor.Helpers
 {
     public class UwpLogger : ILogger
     {
-        private LoggingChannel _channel;
-        private FileLoggingSession _session;
+        private readonly LoggingChannel _channel;
+        private readonly FileLoggingSession _session;
 
         public UwpLogger()
         {
@@ -44,7 +44,6 @@ namespace StellarisSaveEditor.Helpers
                     return LoggingLevel.Warning;
                 case LogLevel.Verbose:
                     return LoggingLevel.Verbose;
-                case LogLevel.Information:
                 default:
                     return LoggingLevel.Information;
             }

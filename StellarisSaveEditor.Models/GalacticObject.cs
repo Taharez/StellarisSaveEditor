@@ -4,6 +4,16 @@ namespace StellarisSaveEditor.Models
 {
     public class GalacticObject
     {
+        public GalacticObject()
+        {
+            Coordinate = new GalacticObjectCoordinate();
+            PlanetIndices = new List<int>();
+            AmbientObjects = new List<int>();
+            HyperLanes = new List<HyperLane>();
+            AsteroidBelts = new List<AsteroidBelt>();
+            GalacticObjectFlags = new List<string>();
+        }
+
         public GalacticObjectCoordinate Coordinate { get; set; }
 
         public string Type { get; set; }

@@ -12,10 +12,8 @@ using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Shapes;
 using StellarisSaveEditor.Models;
 using StellarisSaveEditor.Models.Enums;
-using StellarisSaveEditor.Common;
 using StellarisSaveEditor.Helpers;
 using StellarisSaveEditor.Parser;
-using Windows.UI.Core;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -24,17 +22,17 @@ namespace StellarisSaveEditor
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class MainPage : Page
+    public sealed partial class MainPage
     {
         private GameState GameState { get; set; }
 
         private const double MarkedSystemRadius = 10;
 
-        private DispatcherTimer _resizeTimer;
+        private readonly DispatcherTimer _resizeTimer;
 
         public MainPage()
         {
-            this.InitializeComponent();
+            InitializeComponent();
             _resizeTimer = new DispatcherTimer { Interval = new TimeSpan(0, 0, 0, 0, 500) };
             _resizeTimer.Tick += ResizeTimerTick;
         }
@@ -103,15 +101,13 @@ namespace StellarisSaveEditor
 
         private void GameStateRawSections_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var selectedItem = GameStateRawSections.SelectedItem as ListViewItem;
-            var section = selectedItem != null ? selectedItem.DataContext as GameStateRawSection : null;
+            var section = GameStateRawSections.SelectedItem is ListViewItem selectedItem ? selectedItem.DataContext as GameStateRawSection : null;
             UpdateGameStateRawSectionChildList(section);
         }
 
         private void GameStateRawSectionChildList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var selectedItem = GameStateRawSectionChildList.SelectedItem as ListViewItem;
-            var section = selectedItem != null ? selectedItem.DataContext as GameStateRawSection : null;
+            var section = GameStateRawSectionChildList.SelectedItem is ListViewItem selectedItem ? selectedItem.DataContext as GameStateRawSection : null;
             UpdateGameStateRawSectionDetails(section);
         }
 
@@ -176,9 +172,11 @@ namespace StellarisSaveEditor
 
         private async Task<StorageFile> LoadSaveFile()
         {
-            var picker = new Windows.Storage.Pickers.FileOpenPicker();
-            picker.ViewMode = Windows.Storage.Pickers.PickerViewMode.Thumbnail;
-            picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.PicturesLibrary;
+            var picker = new Windows.Storage.Pickers.FileOpenPicker
+            {
+                ViewMode = Windows.Storage.Pickers.PickerViewMode.Thumbnail,
+                SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.PicturesLibrary
+            };
             picker.FileTypeFilter.Add(".sav");
 
             StorageFile saveFile = await picker.PickSingleFileAsync();
@@ -218,9 +216,12 @@ namespace StellarisSaveEditor
 
         private void UpdateFilters()
         {
+            if (MarkSystemFlags?.Items == null)
+                return;
+
             MarkSystemFlags.Items.Clear();
             var systemFlags = Enum.GetNames(typeof(GalacticObjectFlag)).ToList();
-            var presentSystemFlags = GameState.GalacticObjects.SelectMany(o => o.GalacticObjectFlags != null ? o.GalacticObjectFlags : new List<string>()).Distinct().ToList();
+            var presentSystemFlags = GameState.GalacticObjects.SelectMany(o => o.GalacticObjectFlags ?? new List<string>()).Distinct().ToList();
             systemFlags = systemFlags.Union(presentSystemFlags).ToList(); // Make sure we use all flags in file, even if they are unknown (not in enum)
             foreach (var systemFlag in systemFlags)
             {
@@ -339,7 +340,7 @@ namespace StellarisSaveEditor
 
             if (MarkSystemFlags.SelectedItem != null)
             {
-                var markedFlags = MarkSystemFlags.SelectedItems.Select(i => (i as ListBoxItem).Content as string);
+                var markedFlags = MarkSystemFlags.SelectedItems.Select(i => (i as ListBoxItem)?.Content as string);
                 var markedSystemCoordinates = GalacticObjectsRenderer.GetMarkedSystemCoordinates(GameState, MarkedSystemsMap.ActualWidth, MarkedSystemsMap.ActualHeight, markedFlags);
                 var markedSystemBrush = new SolidColorBrush(Colors.DarkTurquoise);
                 foreach (var markedSystemCoordinate in markedSystemCoordinates)
@@ -362,19 +363,24 @@ namespace StellarisSaveEditor
 
         private void UpdateGameStateRawView()
         {
+            if (GameStateRawAttributes?.Items == null || GameStateRawSections?.Items == null)
+                return;
+
             GameStateRawAttributes.Items.Clear();
             GameStateRawSections.Items.Clear();
 
-            GameStateRawHelpers.PopulateGameStateRawAttributes(GameStateRawAttributes, GameState.GameStateRaw.RootSection);
-            GameStateRawHelpers.PopulateGameStateRawSections(GameStateRawSections, GameState.GameStateRaw.RootSection);
+            GameStateRawHelpers.PopulateGameStateRawAttributes(GameStateRawAttributes,
+                GameState.GameStateRaw.RootSection);
+            GameStateRawHelpers.PopulateGameStateRawSections(GameStateRawSections,
+                GameState.GameStateRaw.RootSection);
         }
 
         private void UpdateGameStateRawSectionChildList(GameStateRawSection selectedSection)
         {
-            GameStateRawSectionChildList.Items.Clear();
-
-            if (selectedSection == null)
+            if (GameStateRawSectionChildList?.Items == null || selectedSection == null)
                 return;
+
+            GameStateRawSectionChildList.Items.Clear();
 
             GameStateRawHelpers.PopulateGameStateRawSectionDetails(GameStateRawSectionChildList, selectedSection);
         }
@@ -406,11 +412,11 @@ namespace StellarisSaveEditor
             VersionLabel.Text = "";
             SaveNameLabel.Text = "";
             FilterPanel.Visibility = Visibility.Collapsed;
-            MarkSystemFlags.Items.Clear();
+            MarkSystemFlags?.Items?.Clear();
             UnloadMap();
-            GameStateRawAttributes.Items.Clear();
-            GameStateRawSections.Items.Clear();
-            GameStateRawSectionChildList.Items.Clear();
+            GameStateRawAttributes?.Items?.Clear();
+            GameStateRawSections?.Items?.Clear();
+            GameStateRawSectionChildList?.Items?.Clear();
             GameStateRawSectionDetails.RootNodes.Clear();
             GameState = null;
         }

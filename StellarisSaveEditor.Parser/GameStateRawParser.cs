@@ -3,22 +3,14 @@ using System;
 using System.Linq;
 using System.Diagnostics;
 using StellarisSaveEditor.Models;
-using StellarisSaveEditor.Common;
 
 namespace StellarisSaveEditor.Parser
 {
     public class GameStateRawParser
     {
-        private readonly ILogger _logger;
-
-        public GameStateRawParser(ILogger logger)
-        {
-            _logger = logger;
-        }
-
         public void ParseGamestateRaw(GameStateRaw gameStateRaw, List<string> gameStateText)
         {
-            gameStateRaw.RootSection = new GameStateRawSection() // Container for all top-level sections and attributes
+            gameStateRaw.RootSection = new GameStateRawSection // Container for all top-level sections and attributes
             {
                 Name = "Root"
             };
@@ -29,12 +21,11 @@ namespace StellarisSaveEditor.Parser
                 if (String.IsNullOrWhiteSpace(currentLine))
                 {
                     // Skip blank lines
-                    continue;
                 }
                 else if (currentLine.Contains("={"))
                 {
                     // Named section start
-                    var sectionName = currentLine.Substring(0, currentLine.IndexOf("={"));
+                    var sectionName = currentLine.Substring(0, currentLine.IndexOf("={", StringComparison.InvariantCulture));
                     var section = new GameStateRawSection
                     {
                         Parent = currentSection,
@@ -44,8 +35,8 @@ namespace StellarisSaveEditor.Parser
                     // Check for single-line section/list
                     if (currentLine.Contains("}"))
                     {
-                        var valueStartIndex = currentLine.IndexOf("={") + 2;
-                        var valueEndIndex = currentLine.IndexOf("}") - 1;
+                        var valueStartIndex = currentLine.IndexOf("={", StringComparison.InvariantCulture) + 2;
+                        var valueEndIndex = currentLine.IndexOf("}", StringComparison.InvariantCulture) - 1;
                         var attributeValue = currentLine.Substring(valueStartIndex, valueEndIndex - valueStartIndex).Trim();
                         var attribute = new GameStateRawAttribute
                         {
@@ -87,8 +78,8 @@ namespace StellarisSaveEditor.Parser
                 else if (currentLine.Contains("="))
                 {
                     // Attribute
-                    var attributeName = currentLine.Substring(0, currentLine.IndexOf("="));
-                    var attributeValue = currentLine.Substring(currentLine.IndexOf("=") + 1).Trim('\"');
+                    var attributeName = currentLine.Substring(0, currentLine.IndexOf("=", StringComparison.InvariantCulture));
+                    var attributeValue = currentLine.Substring(currentLine.IndexOf("=", StringComparison.InvariantCulture) + 1).Trim('\"');
                     var attribute = new GameStateRawAttribute
                     {
                         Parent = currentSection,
