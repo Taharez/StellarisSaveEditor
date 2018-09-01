@@ -14,6 +14,8 @@ namespace StellarisSaveEditor.Models
             GalacticObjectFlags = new List<string>();
         }
 
+        public int Id { get; set; }
+
         public GalacticObjectCoordinate Coordinate { get; set; }
 
         public string Type { get; set; }

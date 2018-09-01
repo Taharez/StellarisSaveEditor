@@ -59,6 +59,9 @@ namespace StellarisSaveEditor.Parser
             {
                 var galacticObject = new GalacticObject();
 
+                int.TryParse(galacticObjectItem.Name, out int galacticObjectId);
+                galacticObject.Id = galacticObjectId;
+
                 // Coordinate
                 var coordinateSection = galacticObjectItem.GetChildSectionByName("coordinate");
                 double.TryParse(coordinateSection.GetAttributeValueByName("x"), out var x);

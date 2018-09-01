@@ -48,6 +48,10 @@ namespace StellarisSaveEditor.Helpers
             {
                 foreach (var hyperLane in galacticObject.HyperLanes)
                 {
+                    // Only render hyperlane once, since they are defined in two galactic objects choos one with lowest "from"-id.
+                    if (galacticObject.Id >= hyperLane.ToGalacticObjectIndex)
+                        continue;
+
                     var target = gameState.GalacticObjects[hyperLane.ToGalacticObjectIndex];
                     var p1 = GetModifiedCoordinate(mapSettings, galacticObject.Coordinate);
                     var p2 = GetModifiedCoordinate(mapSettings, target.Coordinate);
