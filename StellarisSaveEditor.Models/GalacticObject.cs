@@ -1,13 +1,24 @@
 ﻿using System.Collections.Generic;
-using StellarisSaveEditor.Enums;
 
 namespace StellarisSaveEditor.Models
 {
     public class GalacticObject
     {
+        public GalacticObject()
+        {
+            Coordinate = new GalacticObjectCoordinate();
+            PlanetIndices = new List<int>();
+            AmbientObjects = new List<int>();
+            HyperLanes = new List<HyperLane>();
+            AsteroidBelts = new List<AsteroidBelt>();
+            GalacticObjectFlags = new List<string>();
+        }
+
+        public int Id { get; set; }
+
         public GalacticObjectCoordinate Coordinate { get; set; }
 
-        public GalacticObjectType Type { get; set; }
+        public string Type { get; set; }
 
         public string Name { get; set; }
 
@@ -15,13 +26,13 @@ namespace StellarisSaveEditor.Models
 
         public List<int> AmbientObjects { get; set; }
 
-        public StarClass StarClass { get; set; }
+        public string StarClass { get; set; }
 
         public List<HyperLane> HyperLanes { get; set; }
 
         public List<AsteroidBelt> AsteroidBelts { get; set; }
 
-        public List<GalacticObjectFlag> GalacticObjectFlags { get; set; }
+        public List<string> GalacticObjectFlags { get; set; }
 
         public string Initializer { get; set; }
 

@@ -7,6 +7,9 @@ namespace StellarisSaveEditor.Helpers
     {
         public static void PopulateGameStateRawSections(ListView sectionListView, GameStateRawSection rawSection)
         {
+            if (sectionListView?.Items == null)
+                return;
+
             foreach (var childSection in rawSection.Sections)
             {
                 var section = new ListViewItem()
@@ -20,6 +23,9 @@ namespace StellarisSaveEditor.Helpers
 
         public static void PopulateGameStateRawAttributes(ListView sectionListView, GameStateRawSection rawSection)
         {
+            if (sectionListView?.Items == null)
+                return;
+
             foreach (var attribute in rawSection.Attributes)
             {
                 var section = new ListViewItem()

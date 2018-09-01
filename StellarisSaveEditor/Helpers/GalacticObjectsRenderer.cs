@@ -4,7 +4,6 @@ using System.Linq;
 using Windows.Foundation;
 using StellarisSaveEditor.Models;
 using System.Text;
-using StellarisSaveEditor.Enums;
 
 namespace StellarisSaveEditor.Helpers
 {
@@ -12,8 +11,8 @@ namespace StellarisSaveEditor.Helpers
     {
         private struct MapSettings
         {
-            public double MapPixelWidth { get; set; }
-            public double MapPixelHeight { get; set; }
+            public double MapWidth { get; set; }
+            public double MapHeight { get; set; }
             public double MinX { get; set; }
             public double MinY { get; set; }
             public double MaxX { get; set; }
@@ -24,9 +23,9 @@ namespace StellarisSaveEditor.Helpers
 
         public static string RenderAsSvg(GameState gameState, double mapWidth, double mapHeight, double defaultObjectRadius = 2.0)
         {
-            const int EstimatedCharactersPerSystem = 60;
+            const int estimatedCharactersPerSystem = 60;
 
-            var svg = new StringBuilder(gameState.GalacticObjects.Count * EstimatedCharactersPerSystem);
+            var svg = new StringBuilder(gameState.GalacticObjects.Count * estimatedCharactersPerSystem);
             var mapSettings = GetMapSettings(gameState, mapWidth, mapHeight);
             foreach (var galacticObject in gameState.GalacticObjects)
             {
@@ -49,6 +48,10 @@ namespace StellarisSaveEditor.Helpers
             {
                 foreach (var hyperLane in galacticObject.HyperLanes)
                 {
+                    // Only render hyperlane once, since they are defined in two galactic objects choos one with lowest "from"-id.
+                    if (galacticObject.Id >= hyperLane.ToGalacticObjectIndex)
+                        continue;
+
                     var target = gameState.GalacticObjects[hyperLane.ToGalacticObjectIndex];
                     var p1 = GetModifiedCoordinate(mapSettings, galacticObject.Coordinate);
                     var p2 = GetModifiedCoordinate(mapSettings, target.Coordinate);
@@ -67,9 +70,8 @@ namespace StellarisSaveEditor.Helpers
 
         public static List<Point> GetMarkedSystemCoordinates(GameState gameState, double mapWidth, double mapHeight, IEnumerable<string> markedFlags)
         {
-            var markedSystemFlags = markedFlags.Select(f => Enum.Parse(typeof(GalacticObjectFlag), f));
             var markedSystemCoordinates = new List<Point>();
-            var markedSystems = gameState.GalacticObjects.Where(o => o.GalacticObjectFlags.Any(f => markedSystemFlags.Contains(f)));
+            var markedSystems = gameState.GalacticObjects.Where(o => o.GalacticObjectFlags.Any(markedFlags.Contains));
             var mapSettings = GetMapSettings(gameState, mapWidth, mapHeight);
             foreach (var markedSystem in markedSystems)
             {
@@ -78,10 +80,22 @@ namespace StellarisSaveEditor.Helpers
             return markedSystemCoordinates;
         }
 
+        public static List<Point> GetMatchingNameSystemCoordinates(GameState gameState, double mapWidth, double mapHeight, string name)
+        {
+            var matchingNameSystemCoordinates = new List<Point>();
+            var matchingNameSystems = gameState.GalacticObjects.Where(o => o.Name.ToLower().StartsWith(name));
+            var mapSettings = GetMapSettings(gameState, mapWidth, mapHeight);
+            foreach (var matchingNameSystem in matchingNameSystems)
+            {
+                matchingNameSystemCoordinates.Add(GetModifiedCoordinate(mapSettings, matchingNameSystem.Coordinate));
+            }
+            return matchingNameSystemCoordinates;
+        }
+
         private static Point GetModifiedCoordinate(MapSettings mapSettings, GalacticObjectCoordinate coordinate)
         {
             return new Point(
-                mapSettings.MapPixelWidth - ((coordinate.X - mapSettings.MinX) * mapSettings.ModifierX), // Flip X-coord to correspond to in-game coordinate system
+                mapSettings.MapWidth - ((coordinate.X - mapSettings.MinX) * mapSettings.ModifierX), // Flip X-coord to correspond to in-game coordinate system
                 (coordinate.Y - mapSettings.MinY) * mapSettings.ModifierY
                 );
         }
@@ -90,15 +104,15 @@ namespace StellarisSaveEditor.Helpers
         {
             var settings = new MapSettings
             {
-                MapPixelWidth = mapWidth,
-                MapPixelHeight = mapHeight,
+                MapWidth = mapWidth,
+                MapHeight = mapHeight,
                 MinX = gameState.GalacticObjects.Min(o => o.Coordinate.X),
                 MinY = gameState.GalacticObjects.Min(o => o.Coordinate.Y),
                 MaxX = gameState.GalacticObjects.Max(o => o.Coordinate.X),
                 MaxY = gameState.GalacticObjects.Max(o => o.Coordinate.Y)
             };
-            settings.ModifierX = mapWidth / (settings.MaxX - settings.MinX);
-            settings.ModifierY = mapHeight / (settings.MaxY - settings.MinY);
+            settings.ModifierX = settings.MapWidth / (settings.MaxX - settings.MinX);
+            settings.ModifierY = settings.MapHeight / (settings.MaxY - settings.MinY);
             return settings;
         }
     }

@@ -11,7 +11,7 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Shapes;
 using StellarisSaveEditor.Models;
-using StellarisSaveEditor.Enums;
+using StellarisSaveEditor.Models.Enums;
 using StellarisSaveEditor.Helpers;
 using StellarisSaveEditor.Parser;
 
@@ -22,37 +22,54 @@ namespace StellarisSaveEditor
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class MainPage : Page
+    public sealed partial class MainPage
     {
         private GameState GameState { get; set; }
 
         private const double MarkedSystemRadius = 10;
 
-        private DispatcherTimer ResizeTimer = new DispatcherTimer { Interval = new TimeSpan(0, 0, 0, 0, 500)};
+        private readonly DispatcherTimer _resizeTimer;
 
         public MainPage()
         {
-            this.InitializeComponent();
-            ResizeTimer.Tick += ResizeTimerTick;
+            InitializeComponent();
+            _resizeTimer = new DispatcherTimer { Interval = new TimeSpan(0, 0, 0, 0, 500) };
+            _resizeTimer.Tick += ResizeTimerTick;
         }
 
         void ResizeTimerTick(object sender, object e)
         {
-            ResizeTimer.Stop();
+            _resizeTimer.Stop();
 
             if (GameState != null)
             {
                 UnloadMap();
-                UpdateMapImage();
-                UpdateStartingSystemHighlight();
+                UpdateMap();
+                UpdateHyperLanes();
+                UpdateSystemHighlight();
                 UpdateMarkedSystems();
             }
         }
 
         private void Map_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            ResizeTimer.Stop();
-            ResizeTimer.Start();
+            _resizeTimer.Stop();
+            _resizeTimer.Start();
+        }
+
+        private void HightLightSystemName_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            UpdateSystemHighlight();
+        }
+
+        private void HighlightStartingSystem_Checked(object sender, RoutedEventArgs e)
+        {
+            UpdateSystemHighlight();
+        }
+
+        private void HighlightStartingSystem_Unchecked(object sender, RoutedEventArgs e)
+        {
+            UpdateSystemHighlight();
         }
 
         private void MarkSystemFlags_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -60,14 +77,14 @@ namespace StellarisSaveEditor
             UpdateMarkedSystems();
         }
 
-        private void HighlightStartingSystem_Checked(object sender, RoutedEventArgs e)
+        private void ShowHyperLanes_Checked(object sender, RoutedEventArgs e)
         {
-            UpdateStartingSystemHighlight();
+            UpdateHyperLanes();
         }
 
-        private void HighlightStartingSystem_Unchecked(object sender, RoutedEventArgs e)
+        private void ShowHyperLanes_Unchecked(object sender, RoutedEventArgs e)
         {
-            UpdateStartingSystemHighlight();
+            UpdateHyperLanes();
         }
 
         private void ContentPivot_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -84,15 +101,13 @@ namespace StellarisSaveEditor
 
         private void GameStateRawSections_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var selectedItem = GameStateRawSections.SelectedItem as ListViewItem;
-            var section = selectedItem != null ? selectedItem.DataContext as GameStateRawSection : null;
+            var section = GameStateRawSections.SelectedItem is ListViewItem selectedItem ? selectedItem.DataContext as GameStateRawSection : null;
             UpdateGameStateRawSectionChildList(section);
         }
 
         private void GameStateRawSectionChildList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            var selectedItem = GameStateRawSectionChildList.SelectedItem as ListViewItem;
-            var section = selectedItem != null ? selectedItem.DataContext as GameStateRawSection : null;
+            var section = GameStateRawSectionChildList.SelectedItem is ListViewItem selectedItem ? selectedItem.DataContext as GameStateRawSection : null;
             UpdateGameStateRawSectionDetails(section);
         }
 
@@ -102,55 +117,66 @@ namespace StellarisSaveEditor
 
             var res = ResourceLoader.GetForCurrentView();
 
-            var saveFile = await LoadSaveFile();
-            if (saveFile != null)
+            using (var logger = new UwpLogger())
             {
-                UnloadGameState();
 
-                LoadingIndicatorRing.IsActive = true;
-                LoadingIndicatorLabel.Text = res.GetString("LoadingSaveFileLabel");
-                LoadingIndicatorPanel.Visibility = Visibility.Visible;
-
-                var openedFileLabel = res.GetString("OpenedFileLabel");
-                FileNameLabel.Text = string.Format(openedFileLabel, saveFile.Name);
-
-                var gamestateFile = await GetLocalGameStateCopy(saveFile);
-                if (gamestateFile != null)
+                var saveFile = await LoadSaveFile();
+                if (saveFile != null)
                 {
-                    var gamestateText = await FileIO.ReadLinesAsync(gamestateFile);
 
-                    GameState = GameStateParser.ParseGamestate(gamestateText.ToList());
+                    UnloadGameState();
 
-                    VersionLabel.Text = GameState.Version;
-                    SaveNameLabel.Text = GameState.Name;
+                    LoadingIndicatorRing.IsActive = true;
+                    LoadingIndicatorLabel.Text = res.GetString("LoadingSaveFileLabel");
+                    LoadingIndicatorPanel.Visibility = Visibility.Visible;
 
-                    UpdateFilters();
+                    var openedFileLabel = res.GetString("OpenedFileLabel");
+                    FileNameLabel.Text = string.Format(openedFileLabel, saveFile.Name);
 
-                    UpdateMapImage();
+                    var gamestateFile = await GetLocalGameStateCopy(saveFile);
+                    if (gamestateFile != null)
+                    {
+                        var gamestateText = await FileIO.ReadLinesAsync(gamestateFile);
 
-                    UpdateStartingSystemHighlight();
+                        var parser = new GameStateParser(logger);
+                        GameState = parser.ParseGamestate(gamestateText.ToList());
 
-                    FilterPanel.Visibility = Visibility.Visible;
+                        VersionLabel.Text = GameState.Version;
+                        SaveNameLabel.Text = GameState.Name;
 
-                    UpdateGameStateRawView();
+                        UpdateFilters();
 
-                    LoadingIndicatorPanel.Visibility = Visibility.Collapsed;
-                    LoadingIndicatorRing.IsActive = false;
+                        UpdateMap();
+
+                        UpdateHyperLanes();
+
+                        UpdateSystemHighlight();
+
+                        FilterPanel.Visibility = Visibility.Visible;
+
+                        UpdateGameStateRawView();
+
+                        LoadingIndicatorPanel.Visibility = Visibility.Collapsed;
+                        LoadingIndicatorRing.IsActive = false;
+                    }
                 }
+                else
+                {
+                    var operationCanceledLabel = res.GetString("OperationCanceledLabel");
+                    FileNameLabel.Text = operationCanceledLabel;
+                }
+                SelectFile.IsEnabled = true;
+                await logger.SaveAsync();
             }
-            else
-            {
-                var operationCanceledLabel = res.GetString("OperationCanceledLabel");
-                FileNameLabel.Text = operationCanceledLabel;
-            }
-            SelectFile.IsEnabled = true;
         }
 
         private async Task<StorageFile> LoadSaveFile()
         {
-            var picker = new Windows.Storage.Pickers.FileOpenPicker();
-            picker.ViewMode = Windows.Storage.Pickers.PickerViewMode.Thumbnail;
-            picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.PicturesLibrary;
+            var picker = new Windows.Storage.Pickers.FileOpenPicker
+            {
+                ViewMode = Windows.Storage.Pickers.PickerViewMode.Thumbnail,
+                SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.PicturesLibrary
+            };
             picker.FileTypeFilter.Add(".sav");
 
             StorageFile saveFile = await picker.PickSingleFileAsync();
@@ -190,9 +216,13 @@ namespace StellarisSaveEditor
 
         private void UpdateFilters()
         {
+            if (MarkSystemFlags?.Items == null)
+                return;
+
             MarkSystemFlags.Items.Clear();
-            var systemFlags = Enum.GetNames(typeof(GalacticObjectFlag));
-            var presentSystemFlags = GameState.GalacticObjects.SelectMany(o => o.GalacticObjectFlags != null ? o.GalacticObjectFlags : new List<Enums.GalacticObjectFlag>()).Distinct().Select(f => f.ToString()).ToList();
+            var systemFlags = Enum.GetNames(typeof(GalacticObjectFlag)).ToList();
+            var presentSystemFlags = GameState.GalacticObjects.SelectMany(o => o.GalacticObjectFlags ?? new List<string>()).Distinct().ToList();
+            systemFlags = systemFlags.Union(presentSystemFlags).ToList(); // Make sure we use all flags in file, even if they are unknown (not in enum)
             foreach (var systemFlag in systemFlags)
             {
                 MarkSystemFlags.Items.Add(new ListBoxItem
@@ -203,57 +233,68 @@ namespace StellarisSaveEditor
             }
         }
 
-        private void UpdateMapImage()
+        private void UpdateMap()
         {
-            // Clear any old elements in map canvas
-            MapCanvas.Children.Clear();
+            // Clear any old elements in map element
+            SystemMap.Children.Clear();
 
             // Galactic objects
-            var svg = GalacticObjectsRenderer.RenderAsSvg(GameState, MapCanvas.ActualWidth, MapCanvas.ActualHeight);
+            var svg = GalacticObjectsRenderer.RenderAsSvg(GameState, SystemMap.ActualWidth, SystemMap.ActualHeight);
 
             var path = new Path
             {
                 Data = SvgXamlHelper.PathMarkupToGeometry(svg),
                 Fill = new SolidColorBrush(Colors.Blue),
                 Stretch = Stretch.Fill,
-                Width = MapCanvas.ActualWidth,
-                Height = MapCanvas.ActualHeight,
+                Width = SystemMap.ActualWidth,
+                Height = SystemMap.ActualHeight,
                 HorizontalAlignment = HorizontalAlignment.Left,
                 VerticalAlignment = VerticalAlignment.Top
             };
 
-            MapCanvas.Children.Add(path);
+            SystemMap.Children.Add(path);
+        }
 
-            // Hyper lanes
-            var hyperLaneBrush = Resources["ApplicationForegroundThemeBrush"] as Brush;
-            var hyperLaneLines = GalacticObjectsRenderer.RenderHyperLanesAsLineList(GameState, MapCanvas.ActualWidth, MapCanvas.ActualHeight);
-            foreach(var hyperLaneLine in hyperLaneLines)
+        private void UpdateHyperLanes()
+        {
+            if (HyperLaneMap == null)
+                return;
+
+            HyperLaneMap.Children.Clear();
+
+            if (ShowHyperLanes.IsChecked == true)
             {
-                var line = new Line
+                var hyperLaneBrush = Resources["ApplicationForegroundThemeBrush"] as Brush;
+                var hyperLaneLines = GalacticObjectsRenderer.RenderHyperLanesAsLineList(GameState, HyperLaneMap.ActualWidth, HyperLaneMap.ActualHeight);
+                foreach (var hyperLaneLine in hyperLaneLines)
                 {
-                    HorizontalAlignment= HorizontalAlignment.Left,
-                    VerticalAlignment = VerticalAlignment.Top,
-                    Stroke = hyperLaneBrush,
-                    X1 = hyperLaneLine.Item1.X,
-                    Y1 = hyperLaneLine.Item1.Y,
-                    X2 = hyperLaneLine.Item2.X,
-                    Y2 = hyperLaneLine.Item2.Y
-                };
-                MapCanvas.Children.Add(line);
+                    var line = new Line
+                    {
+
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Top,
+                        Stroke = hyperLaneBrush,
+                        X1 = hyperLaneLine.Item1.X,
+                        Y1 = hyperLaneLine.Item1.Y,
+                        X2 = hyperLaneLine.Item2.X,
+                        Y2 = hyperLaneLine.Item2.Y
+                    };
+                    HyperLaneMap.Children.Add(line);
+                }
             }
         }
 
-        private void UpdateStartingSystemHighlight()
+        private void UpdateSystemHighlight()
         {
-            if (StartingSystemsCanvas == null)
+            if (SystemHightlightMap == null)
                 return;
 
-            StartingSystemsCanvas.Children.Clear();
+            SystemHightlightMap.Children.Clear();
             
             // Player system
             if (HighlightStartingSystem.IsChecked == true)
             {
-                var playerSystemCoordinate = GalacticObjectsRenderer.GetPlayerSystemCoordinates(GameState, MapCanvas.ActualWidth, MapCanvas.ActualHeight);
+                var playerSystemCoordinate = GalacticObjectsRenderer.GetPlayerSystemCoordinates(GameState, SystemHightlightMap.ActualWidth, SystemHightlightMap.ActualHeight);
                 var playerSystemBrush = new SolidColorBrush(Colors.OrangeRed);
                 var playerSystemShape = new Ellipse
                 {
@@ -265,20 +306,42 @@ namespace StellarisSaveEditor
                     VerticalAlignment = VerticalAlignment.Top
                 };
 
-                StartingSystemsCanvas.Children.Add(playerSystemShape);
+                SystemHightlightMap.Children.Add(playerSystemShape);
 
                 playerSystemShape.Margin = new Thickness(playerSystemCoordinate.X - MarkedSystemRadius, playerSystemCoordinate.Y - MarkedSystemRadius, 0, 0);
+            }
+
+            // Searched systems
+            if (!String.IsNullOrEmpty(HightLightSystemName.Text))
+            {
+                var highlightedSystemCoordinates = GalacticObjectsRenderer.GetMatchingNameSystemCoordinates(GameState, MarkedSystemsMap.ActualWidth, MarkedSystemsMap.ActualHeight, HightLightSystemName.Text.ToLower());
+                var highlightedSystemBrush = Resources["ApplicationForegroundThemeBrush"] as Brush;
+                foreach (var highlightedSystemCoordinate in highlightedSystemCoordinates)
+                {
+                    var highlightedSystemShape = new Ellipse
+                    {
+                        Stroke = highlightedSystemBrush,
+                        StrokeThickness = 2,
+                        Width = 2 * MarkedSystemRadius,
+                        Height = 2 * MarkedSystemRadius,
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Top
+                    };
+
+                    SystemHightlightMap.Children.Add(highlightedSystemShape);
+                    highlightedSystemShape.Margin = new Thickness(highlightedSystemCoordinate.X - MarkedSystemRadius, highlightedSystemCoordinate.Y - MarkedSystemRadius, 0, 0);
+                }
             }
         }
 
         private void UpdateMarkedSystems()
         {
-            MarkedSystemsCanvas.Children.Clear();
+            MarkedSystemsMap.Children.Clear();
 
             if (MarkSystemFlags.SelectedItem != null)
             {
-                var markedFlags = MarkSystemFlags.SelectedItems.Select(i => (i as ListBoxItem).Content as string);
-                var markedSystemCoordinates = GalacticObjectsRenderer.GetMarkedSystemCoordinates(GameState, MapCanvas.ActualWidth, MapCanvas.ActualHeight, markedFlags);
+                var markedFlags = MarkSystemFlags.SelectedItems.Select(i => (i as ListBoxItem)?.Content as string);
+                var markedSystemCoordinates = GalacticObjectsRenderer.GetMarkedSystemCoordinates(GameState, MarkedSystemsMap.ActualWidth, MarkedSystemsMap.ActualHeight, markedFlags);
                 var markedSystemBrush = new SolidColorBrush(Colors.DarkTurquoise);
                 foreach (var markedSystemCoordinate in markedSystemCoordinates)
                 {
@@ -292,7 +355,7 @@ namespace StellarisSaveEditor
                         VerticalAlignment = VerticalAlignment.Top
                     };
 
-                    MarkedSystemsCanvas.Children.Add(markedSystemShape);
+                    MarkedSystemsMap.Children.Add(markedSystemShape);
                     markedSystemShape.Margin = new Thickness(markedSystemCoordinate.X - MarkedSystemRadius, markedSystemCoordinate.Y - MarkedSystemRadius, 0, 0);
                 }
             }
@@ -300,19 +363,24 @@ namespace StellarisSaveEditor
 
         private void UpdateGameStateRawView()
         {
+            if (GameStateRawAttributes?.Items == null || GameStateRawSections?.Items == null)
+                return;
+
             GameStateRawAttributes.Items.Clear();
             GameStateRawSections.Items.Clear();
 
-            GameStateRawHelpers.PopulateGameStateRawAttributes(GameStateRawAttributes, GameState.GameStateRaw.RootSection);
-            GameStateRawHelpers.PopulateGameStateRawSections(GameStateRawSections, GameState.GameStateRaw.RootSection);
+            GameStateRawHelpers.PopulateGameStateRawAttributes(GameStateRawAttributes,
+                GameState.GameStateRaw.RootSection);
+            GameStateRawHelpers.PopulateGameStateRawSections(GameStateRawSections,
+                GameState.GameStateRaw.RootSection);
         }
 
         private void UpdateGameStateRawSectionChildList(GameStateRawSection selectedSection)
         {
-            GameStateRawSectionChildList.Items.Clear();
-
-            if (selectedSection == null)
+            if (GameStateRawSectionChildList?.Items == null || selectedSection == null)
                 return;
+
+            GameStateRawSectionChildList.Items.Clear();
 
             GameStateRawHelpers.PopulateGameStateRawSectionDetails(GameStateRawSectionChildList, selectedSection);
         }
@@ -332,9 +400,10 @@ namespace StellarisSaveEditor
 
         private void UnloadMap()
         {
-            MapCanvas.Children.Clear();
-            StartingSystemsCanvas.Children.Clear();
-            MarkedSystemsCanvas.Children.Clear();
+            SystemMap.Children.Clear();
+            HyperLaneMap.Children.Clear();
+            SystemHightlightMap.Children.Clear();
+            MarkedSystemsMap.Children.Clear();
         }
 
         private void UnloadGameState()
@@ -343,11 +412,11 @@ namespace StellarisSaveEditor
             VersionLabel.Text = "";
             SaveNameLabel.Text = "";
             FilterPanel.Visibility = Visibility.Collapsed;
-            MarkSystemFlags.Items.Clear();
+            MarkSystemFlags?.Items?.Clear();
             UnloadMap();
-            GameStateRawAttributes.Items.Clear();
-            GameStateRawSections.Items.Clear();
-            GameStateRawSectionChildList.Items.Clear();
+            GameStateRawAttributes?.Items?.Clear();
+            GameStateRawSections?.Items?.Clear();
+            GameStateRawSectionChildList?.Items?.Clear();
             GameStateRawSectionDetails.RootNodes.Clear();
             GameState = null;
         }

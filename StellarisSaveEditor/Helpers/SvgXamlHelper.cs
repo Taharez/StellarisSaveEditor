@@ -17,11 +17,10 @@ namespace StellarisSaveEditor.Helpers
                 "<Path " +
                 "xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'>" +
                 "<Path.Data>" + pathMarkup + "</Path.Data></Path>";
-                var path = XamlReader.Load(xaml) as Path;
                 // Detach the PathGeometry from the Path
-                if (path != null)
+                if (XamlReader.Load(xaml) is Path path)
                 {
-                    Geometry geometry = path.Data;
+                    var geometry = path.Data;
                     path.Data = null;
                     return geometry;
                 }

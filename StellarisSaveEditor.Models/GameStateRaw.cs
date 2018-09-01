@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace StellarisSaveEditor.Models
+﻿namespace StellarisSaveEditor.Models
 {
     public class GameStateRaw
     {
