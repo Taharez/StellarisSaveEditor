@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" IgnorableNamespaces="uap mp">
-  <Identity Name="288c7f14-5f15-4900-8e83-6ca745514c6d" Publisher="CN=lars" Version="1.0.0.0" />
+  <Identity Name="288c7f14-5f15-4900-8e83-6ca745514c6d" Publisher="CN=lars" Version="0.1.0.0" />
   <mp:PhoneIdentity PhoneProductId="288c7f14-5f15-4900-8e83-6ca745514c6d" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
     <DisplayName>StellarisSaveEditor</DisplayName>
