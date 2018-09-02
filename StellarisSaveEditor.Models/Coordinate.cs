@@ -1,6 +1,6 @@
 ﻿namespace StellarisSaveEditor.Models
 {
-    public class GalacticObjectCoordinate
+    public class Coordinate
     {
         public double X { get; set; }
 

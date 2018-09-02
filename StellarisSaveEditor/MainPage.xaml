@@ -39,12 +39,16 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <CheckBox x:Name="HighlightStartingSystem" x:Uid="HighlightStartingSystem" Grid.Row="0" IsChecked="True" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" Checked="HighlightStartingSystem_Checked" Unchecked="HighlightStartingSystem_Unchecked" Content="[Highlight starting system]"/>
                 <CheckBox x:Name="ShowHyperLanes" x:Uid="ShowHyperLanes" Grid.Row="1" IsChecked="True" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" Checked="ShowHyperLanes_Checked" Unchecked="ShowHyperLanes_Unchecked" Content="[Show hyperlanes]"/>
-                <TextBox x:Name="HightLightSystemName" x:Uid="HightLightSystemName" Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" PlaceholderText="[System name]" TextChanged="HightLightSystemName_TextChanged" />
-                <ListBox x:Name="MarkSystemFlags" Grid.Row="3" SelectionMode="Multiple" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Enabled" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" SelectionChanged="MarkSystemFlags_SelectionChanged" />
+                <CheckBox x:Name="ShowWormholes" x:Uid="ShowWormholes" Grid.Row="2" IsChecked="True" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" Checked="ShowHyperWormholes_Checked" Unchecked="ShowWormholes_Unchecked" Content="[Show worm holes]"/>
+                <CheckBox x:Name="ShowWormholeConnections" x:Uid="ShowWormholeConnections" Grid.Row="3" IsChecked="True" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" Checked="ShowWormholeConnections_Checked" Unchecked="ShowWormholeConnections_Unchecked" Content="[Show wormhole connections]"/>
+                <TextBox x:Name="HightLightSystemName" x:Uid="HightLightSystemName" Grid.Row="4" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" PlaceholderText="[System name]" TextChanged="HightLightSystemName_TextChanged" />
+                <ListBox x:Name="MarkSystemFlags" Grid.Row="5" SelectionMode="Multiple" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Enabled" HorizontalAlignment="Center" VerticalAlignment="Top" Width="200" Margin="0,20,0,0" SelectionChanged="MarkSystemFlags_SelectionChanged" />
             </Grid>
         </Grid>
 
@@ -60,6 +64,7 @@
 
                     <Grid x:Name="SystemMap" Grid.Row="0" Grid.Column="0" Margin="10,20,10,10" />
                     <Grid x:Name="HyperLaneMap" Grid.Row="0" Grid.Column="0" Margin="10,20,10,10" />
+                    <Grid x:Name="WormholeMap" Grid.Row="0" Grid.Column="0" Margin="10,20,10,10" />
                     <Grid x:Name="SystemHightlightMap"  Grid.Row="0" Grid.Column="0" Margin="10,20,10,10" />
                     <Grid x:Name="MarkedSystemsMap" Grid.Row="0" Grid.Column="0" Margin="10,20,10,10" />
                 </Grid>

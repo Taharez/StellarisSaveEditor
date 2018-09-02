@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.IO.Compression;
 using Windows.ApplicationModel.Resources;
+using Windows.Foundation;
 using Windows.Storage;
 using Windows.UI;
 using Windows.UI.Xaml;
@@ -87,6 +88,26 @@ namespace StellarisSaveEditor
             UpdateHyperLanes();
         }
 
+        private void ShowHyperWormholes_Checked(object sender, RoutedEventArgs e)
+        {
+            UpdateWormholes();
+        }
+
+        private void ShowWormholes_Unchecked(object sender, RoutedEventArgs e)
+        {
+            UpdateWormholes();
+        }
+
+        private void ShowWormholeConnections_Checked(object sender, RoutedEventArgs e)
+        {
+            UpdateWormholes();
+        }
+
+        private void ShowWormholeConnections_Unchecked(object sender, RoutedEventArgs e)
+        {
+            UpdateWormholes();
+        }
+
         private void ContentPivot_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (ContentPivot.SelectedItem == MapPivot && GameState != null)
@@ -149,6 +170,8 @@ namespace StellarisSaveEditor
                         UpdateMap();
 
                         UpdateHyperLanes();
+
+                        UpdateWormholes();
 
                         UpdateSystemHighlight();
 
@@ -221,7 +244,7 @@ namespace StellarisSaveEditor
 
             MarkSystemFlags.Items.Clear();
             var systemFlags = Enum.GetNames(typeof(GalacticObjectFlag)).ToList();
-            var presentSystemFlags = GameState.GalacticObjects.SelectMany(o => o.GalacticObjectFlags ?? new List<string>()).Distinct().ToList();
+            var presentSystemFlags = GameState.GalacticObjects.Values.SelectMany(o => o.GalacticObjectFlags ?? new List<string>()).Distinct().ToList();
             systemFlags = systemFlags.Union(presentSystemFlags).ToList(); // Make sure we use all flags in file, even if they are unknown (not in enum)
             foreach (var systemFlag in systemFlags)
             {
@@ -284,6 +307,45 @@ namespace StellarisSaveEditor
             }
         }
 
+        private void UpdateWormholes()
+        {
+            if (WormholeMap == null)
+                return;
+
+            WormholeMap.Children.Clear();
+
+            if (ShowWormholes.IsChecked == true)
+            {
+                var wormholeSystemCoordinates = GalacticObjectsRenderer.GetWormholeSystemCoordinates(GameState, WormholeMap.ActualWidth, WormholeMap.ActualHeight);
+                var wormholeSystemBrush = new SolidColorBrush(Colors.DarkGoldenrod);
+                foreach (var wormholeSystemCoordinate in wormholeSystemCoordinates)
+                {
+                    AddSystemMark(wormholeSystemCoordinate, wormholeSystemBrush, WormholeMap.Children);
+                }
+            }
+
+            if (ShowWormholeConnections.IsChecked == true)
+            {
+                var wormholeConnectionBrush = new SolidColorBrush(Colors.DarkGoldenrod);
+                var wormholeConnectionLines = GalacticObjectsRenderer.RenderWormholeConnectionsAsLineList(GameState, WormholeMap.ActualWidth, WormholeMap.ActualHeight);
+                foreach (var wormholeConnectionLine in wormholeConnectionLines)
+                {
+                    var line = new Line
+                    {
+
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Top,
+                        Stroke = wormholeConnectionBrush,
+                        X1 = wormholeConnectionLine.Item1.X,
+                        Y1 = wormholeConnectionLine.Item1.Y,
+                        X2 = wormholeConnectionLine.Item2.X,
+                        Y2 = wormholeConnectionLine.Item2.Y
+                    };
+                    WormholeMap.Children.Add(line);
+                }
+            }
+        }
+
         private void UpdateSystemHighlight()
         {
             if (SystemHightlightMap == null)
@@ -296,19 +358,7 @@ namespace StellarisSaveEditor
             {
                 var playerSystemCoordinate = GalacticObjectsRenderer.GetPlayerSystemCoordinates(GameState, SystemHightlightMap.ActualWidth, SystemHightlightMap.ActualHeight);
                 var playerSystemBrush = new SolidColorBrush(Colors.OrangeRed);
-                var playerSystemShape = new Ellipse
-                {
-                    Stroke = playerSystemBrush,
-                    StrokeThickness = 2,
-                    Width = 2 * MarkedSystemRadius,
-                    Height = 2 * MarkedSystemRadius,
-                    HorizontalAlignment = HorizontalAlignment.Left,
-                    VerticalAlignment = VerticalAlignment.Top
-                };
-
-                SystemHightlightMap.Children.Add(playerSystemShape);
-
-                playerSystemShape.Margin = new Thickness(playerSystemCoordinate.X - MarkedSystemRadius, playerSystemCoordinate.Y - MarkedSystemRadius, 0, 0);
+                AddSystemMark(playerSystemCoordinate, playerSystemBrush, SystemHightlightMap.Children);
             }
 
             // Searched systems
@@ -318,18 +368,7 @@ namespace StellarisSaveEditor
                 var highlightedSystemBrush = Resources["ApplicationForegroundThemeBrush"] as Brush;
                 foreach (var highlightedSystemCoordinate in highlightedSystemCoordinates)
                 {
-                    var highlightedSystemShape = new Ellipse
-                    {
-                        Stroke = highlightedSystemBrush,
-                        StrokeThickness = 2,
-                        Width = 2 * MarkedSystemRadius,
-                        Height = 2 * MarkedSystemRadius,
-                        HorizontalAlignment = HorizontalAlignment.Left,
-                        VerticalAlignment = VerticalAlignment.Top
-                    };
-
-                    SystemHightlightMap.Children.Add(highlightedSystemShape);
-                    highlightedSystemShape.Margin = new Thickness(highlightedSystemCoordinate.X - MarkedSystemRadius, highlightedSystemCoordinate.Y - MarkedSystemRadius, 0, 0);
+                    AddSystemMark(highlightedSystemCoordinate, highlightedSystemBrush, SystemHightlightMap.Children);
                 }
             }
         }
@@ -345,20 +384,24 @@ namespace StellarisSaveEditor
                 var markedSystemBrush = new SolidColorBrush(Colors.DarkTurquoise);
                 foreach (var markedSystemCoordinate in markedSystemCoordinates)
                 {
-                    var markedSystemShape = new Ellipse
-                    {
-                        Stroke = markedSystemBrush,
-                        StrokeThickness = 2,
-                        Width = 2 * MarkedSystemRadius,
-                        Height = 2 * MarkedSystemRadius,
-                        HorizontalAlignment = HorizontalAlignment.Left,
-                        VerticalAlignment = VerticalAlignment.Top
-                    };
-
-                    MarkedSystemsMap.Children.Add(markedSystemShape);
-                    markedSystemShape.Margin = new Thickness(markedSystemCoordinate.X - MarkedSystemRadius, markedSystemCoordinate.Y - MarkedSystemRadius, 0, 0);
+                    AddSystemMark(markedSystemCoordinate, markedSystemBrush, MarkedSystemsMap.Children);
                 }
             }
+        }
+
+        private void AddSystemMark(Point coordinate, Brush brush, UIElementCollection collection)
+        {
+            var shape = new Ellipse
+            {
+                Stroke = brush,
+                StrokeThickness = 2,
+                Width = 2 * MarkedSystemRadius,
+                Height = 2 * MarkedSystemRadius,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top
+            };
+            collection.Add(shape);
+            shape.Margin = new Thickness(coordinate.X - MarkedSystemRadius, coordinate.Y - MarkedSystemRadius, 0, 0);
         }
 
         private void UpdateGameStateRawView()
@@ -402,6 +445,7 @@ namespace StellarisSaveEditor
         {
             SystemMap.Children.Clear();
             HyperLaneMap.Children.Clear();
+            WormholeMap.Children.Clear();
             SystemHightlightMap.Children.Clear();
             MarkedSystemsMap.Children.Clear();
         }

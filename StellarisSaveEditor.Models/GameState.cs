@@ -30,12 +30,16 @@ namespace StellarisSaveEditor.Models
 
         public List<Nebula> Nebula { get; set; }
 
-        public List<Pop> Pops { get; set; }
+        public Dictionary<int, Pop> Pops { get; set; }
 
         public int LastCreatedPopIndex { get; set; }
 
-        public List<GalacticObject> GalacticObjects { get; set; }
+        public Dictionary<int, GalacticObject> GalacticObjects { get; set; }
 
-        public List<Country> Countries { get; set; }
+        public Dictionary<int, Country> Countries { get; set; }
+
+        public Dictionary<int, Bypass> Bypasses { get; set; }
+
+        public Dictionary<int, NaturalWormhole> NaturalWormholes { get; set; }
     }
 }

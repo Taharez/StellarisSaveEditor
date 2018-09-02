@@ -168,6 +168,12 @@
   <data name="ShowHyperLanes.Content" xml:space="preserve">
     <value>Show hyperlanes</value>
   </data>
+  <data name="ShowWormholeConnections.Content" xml:space="preserve">
+    <value>Show wormhole connections</value>
+  </data>
+  <data name="ShowWormholes.Content" xml:space="preserve">
+    <value>Show wormholes</value>
+  </data>
   <data name="UpdatingGameStateLabel" xml:space="preserve">
     <value>Loading game state</value>
   </data>

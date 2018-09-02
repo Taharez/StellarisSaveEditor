@@ -6,7 +6,7 @@ namespace StellarisSaveEditor.Models
     {
         public GalacticObject()
         {
-            Coordinate = new GalacticObjectCoordinate();
+            Coordinate = new Coordinate();
             PlanetIndices = new List<int>();
             AmbientObjects = new List<int>();
             HyperLanes = new List<HyperLane>();
@@ -16,7 +16,7 @@ namespace StellarisSaveEditor.Models
 
         public int Id { get; set; }
 
-        public GalacticObjectCoordinate Coordinate { get; set; }
+        public Coordinate Coordinate { get; set; }
 
         public string Type { get; set; }
 

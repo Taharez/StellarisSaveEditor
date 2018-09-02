@@ -31,6 +31,10 @@ namespace StellarisSaveEditor.Parser
 
             ParseGamestateCountries(gameState);
 
+            ParseGamestateBypasses(gameState);
+
+            ParseGamestateWormholes(gameState);
+
             return gameState;
         }
 
@@ -53,7 +57,7 @@ namespace StellarisSaveEditor.Parser
         {
             var gameStateRaw = gameState.GameStateRaw;
 
-            gameState.GalacticObjects = new List<GalacticObject>();
+            gameState.GalacticObjects = new Dictionary<int, GalacticObject>();
             var galacticObjectSection = gameStateRaw.RootSection.GetChildSectionByName("galactic_object");
             foreach (var galacticObjectItem in galacticObjectSection.Sections)
             {
@@ -63,15 +67,7 @@ namespace StellarisSaveEditor.Parser
                 galacticObject.Id = galacticObjectId;
 
                 // Coordinate
-                var coordinateSection = galacticObjectItem.GetChildSectionByName("coordinate");
-                double.TryParse(coordinateSection.GetAttributeValueByName("x"), out var x);
-                double.TryParse(coordinateSection.GetAttributeValueByName("y"), out var y);
-                long.TryParse(coordinateSection.GetAttributeValueByName("origin"), out var origin);
-                var randomized = coordinateSection.GetAttributeValueByName("randomized");
-                galacticObject.Coordinate.X = x;
-                galacticObject.Coordinate.Y = y;
-                galacticObject.Coordinate.Origin = origin;
-                galacticObject.Coordinate.Randomized = randomized.Equals("yes");
+                galacticObject.Coordinate = ParseCoordinate(galacticObjectItem);
 
                 // Type and name
                 var typeString = galacticObjectItem.GetAttributeValueByName("type");
@@ -133,7 +129,7 @@ namespace StellarisSaveEditor.Parser
                     }
                 }
 
-                gameState.GalacticObjects.Add(galacticObject);
+                gameState.GalacticObjects.Add(galacticObject.Id, galacticObject);
             }
         }
 
@@ -141,22 +137,104 @@ namespace StellarisSaveEditor.Parser
         {
             var gameStateRaw = gameState.GameStateRaw;
 
-            gameState.Countries = new List<Country>();
+            gameState.Countries = new Dictionary<int, Country>();
             var countrySection = gameStateRaw.RootSection.GetChildSectionByName("country");
             foreach (var countrySectionItem in countrySection.Sections)
             {
-                var country = new Country {Name = countrySectionItem.GetAttributeValueByName("name")};
+                var country = new Country
+                {
+                    Id = int.Parse(countrySectionItem.Name),
+                    Name = countrySectionItem.GetAttributeValueByName("name")
+                };
 
-            var startingSystemAttribute = countrySectionItem.GetAttributeByName("starting_system");
+                var startingSystemAttribute = countrySectionItem.GetAttributeByName("starting_system");
                 if (startingSystemAttribute != null)
                 {
                     int.TryParse(startingSystemAttribute.Value, out var startingSystemIndex);
                     country.StartingSystemIndex = startingSystemIndex;
                 }
 
-                gameState.Countries.Add(country);
+                gameState.Countries.Add(country.Id, country);
             }
         }
 
+        private void ParseGamestateBypasses(GameState gameState)
+        {
+            var gameStateRaw = gameState.GameStateRaw;
+
+            gameState.Bypasses = new Dictionary<int, Bypass>();
+            var bypassSection = gameStateRaw.RootSection.GetChildSectionByName("bypasses");
+            foreach (var bypassSectionItem in bypassSection.Sections)
+            {
+                var bypass = new Bypass{ Id = int.Parse(bypassSectionItem.Name) };
+
+                bypass.BypassType = bypassSectionItem.GetAttributeByName("type").Value;
+                var activeAttribute = bypassSectionItem.GetAttributeByName("active");
+                bypass.IsActive = activeAttribute.Value.Equals("yes");
+                var linkedToAttribute = bypassSectionItem.GetAttributeByName("linked_to");
+                if (linkedToAttribute != null && !linkedToAttribute.Value.Equals(String.Empty))
+                {
+                    int.TryParse(linkedToAttribute.Value, out var linkedTo);
+                    bypass.LinkedToBypassId = linkedTo;
+                }
+
+                bypass.Owner = ParseOwner(bypassSectionItem);
+
+                gameState.Bypasses.Add(bypass.Id, bypass);
+            }
+        }
+
+        private void ParseGamestateWormholes(GameState gameState)
+        {
+            var gameStateRaw = gameState.GameStateRaw;
+
+            gameState.NaturalWormholes = new Dictionary<int, NaturalWormhole>();
+            var wormholeSection = gameStateRaw.RootSection.GetChildSectionByName("natural_wormholes");
+            foreach (var wormholeSectionItem in wormholeSection.Sections)
+            {
+                var wormhole = new NaturalWormhole() { Id = int.Parse(wormholeSectionItem.Name) };
+
+                wormhole.Coordinate = ParseCoordinate(wormholeSectionItem);
+                var bypassAttribute = wormholeSectionItem.GetAttributeByName("bypass");
+                int.TryParse(bypassAttribute.Value, out var bypassId);
+                wormhole.BypassId = bypassId;
+
+                gameState.NaturalWormholes.Add(wormhole.Id, wormhole);
+            }
+        }
+
+
+
+        // Shared parsers
+        
+        private Coordinate ParseCoordinate(GameStateRawSection rawSection)
+        {
+            var coordinateSection = rawSection.GetChildSectionByName("coordinate");
+            double.TryParse(coordinateSection.GetAttributeValueByName("x"), out var x);
+            double.TryParse(coordinateSection.GetAttributeValueByName("y"), out var y);
+            long.TryParse(coordinateSection.GetAttributeValueByName("origin"), out var origin);
+            var randomized = coordinateSection.GetAttributeValueByName("randomized");
+
+            return new Coordinate
+            {
+                X = x,
+                Y = y,
+                Origin = origin,
+                Randomized = randomized.Equals("yes")
+            };
+        }
+
+        private Owner ParseOwner(GameStateRawSection rawSection)
+        {
+            var coordinateSection = rawSection.GetChildSectionByName("owner");
+            int.TryParse(coordinateSection.GetAttributeValueByName("type"), out var type);
+            int.TryParse(coordinateSection.GetAttributeValueByName("id"), out var id);
+
+            return new Owner
+            {
+                Type = type,
+                Id = id
+            };
+        }
     }
 }

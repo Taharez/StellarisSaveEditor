@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using Windows.Foundation;
 using StellarisSaveEditor.Models;
@@ -27,7 +28,7 @@ namespace StellarisSaveEditor.Helpers
 
             var svg = new StringBuilder(gameState.GalacticObjects.Count * estimatedCharactersPerSystem);
             var mapSettings = GetMapSettings(gameState, mapWidth, mapHeight);
-            foreach (var galacticObject in gameState.GalacticObjects)
+            foreach (var galacticObject in gameState.GalacticObjects.Values)
             {
                 double objectRadius = defaultObjectRadius;
                 var c = GetModifiedCoordinate(mapSettings, galacticObject.Coordinate);
@@ -44,11 +45,11 @@ namespace StellarisSaveEditor.Helpers
         {
             var lineList = new List<Tuple<Point, Point>>();
             var mapSettings = GetMapSettings(gameState, mapWidth, mapHeight);
-            foreach (var galacticObject in gameState.GalacticObjects)
+            foreach (var galacticObject in gameState.GalacticObjects.Values)
             {
                 foreach (var hyperLane in galacticObject.HyperLanes)
                 {
-                    // Only render hyperlane once, since they are defined in two galactic objects choos one with lowest "from"-id.
+                    // Only render hyperlane once, since they are defined in two galactic objects choose the one with lowest "from"-id.
                     if (galacticObject.Id >= hyperLane.ToGalacticObjectIndex)
                         continue;
 
@@ -57,6 +58,43 @@ namespace StellarisSaveEditor.Helpers
                     var p2 = GetModifiedCoordinate(mapSettings, target.Coordinate);
                     lineList.Add(new Tuple<Point, Point>(p1, p2));
                 }
+            }
+            return lineList;
+        }
+
+        public static List<Point> GetWormholeSystemCoordinates(GameState gameState, double mapWidth, double mapHeight)
+        {
+            var wormholeSystemCoordinates = new List<Point>();
+            var mapSettings = GetMapSettings(gameState, mapWidth, mapHeight);
+            foreach (var wormhole in gameState.NaturalWormholes.Values)
+            {
+                var wormholeGalacticObject = gameState.GalacticObjects[(int)wormhole.Coordinate.Origin];
+                wormholeSystemCoordinates.Add(GetModifiedCoordinate(mapSettings, wormholeGalacticObject.Coordinate));
+            }
+
+            return wormholeSystemCoordinates;
+        }
+
+        public static List<Tuple<Point, Point>> RenderWormholeConnectionsAsLineList(GameState gameState, double mapWidth, double mapHeight)
+        {
+            var lineList = new List<Tuple<Point, Point>>();
+            var mapSettings = GetMapSettings(gameState, mapWidth, mapHeight);
+            foreach (var wormholeBypass in gameState.Bypasses.Values.Where(bp => bp.BypassType == "wormhole"))
+            {
+                // Only render wormhole connection once
+                if (!(wormholeBypass.Id < wormholeBypass.LinkedToBypassId))
+                    continue;
+
+                var startingWormhole = gameState.NaturalWormholes.Values.FirstOrDefault(wh => wh.BypassId == wormholeBypass.Id);
+                var targetWormhole = gameState.NaturalWormholes.Values.FirstOrDefault(wh => wh.BypassId == wormholeBypass.LinkedToBypassId);
+                if (startingWormhole == null || targetWormhole == null)
+                    continue;
+
+                var startingGalacticObject = gameState.GalacticObjects[(int)startingWormhole.Coordinate.Origin];
+                var targetGalacticObject = gameState.GalacticObjects[(int)targetWormhole.Coordinate.Origin];
+                var p1 = GetModifiedCoordinate(mapSettings, startingGalacticObject.Coordinate);
+                var p2 = GetModifiedCoordinate(mapSettings, targetGalacticObject.Coordinate);
+                lineList.Add(new Tuple<Point, Point>(p1, p2));
             }
             return lineList;
         }
@@ -71,7 +109,7 @@ namespace StellarisSaveEditor.Helpers
         public static List<Point> GetMarkedSystemCoordinates(GameState gameState, double mapWidth, double mapHeight, IEnumerable<string> markedFlags)
         {
             var markedSystemCoordinates = new List<Point>();
-            var markedSystems = gameState.GalacticObjects.Where(o => o.GalacticObjectFlags.Any(markedFlags.Contains));
+            var markedSystems = gameState.GalacticObjects.Values.Where(o => o.GalacticObjectFlags.Any(markedFlags.Contains));
             var mapSettings = GetMapSettings(gameState, mapWidth, mapHeight);
             foreach (var markedSystem in markedSystems)
             {
@@ -83,7 +121,7 @@ namespace StellarisSaveEditor.Helpers
         public static List<Point> GetMatchingNameSystemCoordinates(GameState gameState, double mapWidth, double mapHeight, string name)
         {
             var matchingNameSystemCoordinates = new List<Point>();
-            var matchingNameSystems = gameState.GalacticObjects.Where(o => o.Name.ToLower().StartsWith(name));
+            var matchingNameSystems = gameState.GalacticObjects.Values.Where(o => o.Name.ToLower().StartsWith(name));
             var mapSettings = GetMapSettings(gameState, mapWidth, mapHeight);
             foreach (var matchingNameSystem in matchingNameSystems)
             {
@@ -92,7 +130,11 @@ namespace StellarisSaveEditor.Helpers
             return matchingNameSystemCoordinates;
         }
 
-        private static Point GetModifiedCoordinate(MapSettings mapSettings, GalacticObjectCoordinate coordinate)
+
+
+        // Shared helper methods
+
+        private static Point GetModifiedCoordinate(MapSettings mapSettings, Coordinate coordinate)
         {
             return new Point(
                 mapSettings.MapWidth - ((coordinate.X - mapSettings.MinX) * mapSettings.ModifierX), // Flip X-coord to correspond to in-game coordinate system
@@ -106,10 +148,10 @@ namespace StellarisSaveEditor.Helpers
             {
                 MapWidth = mapWidth,
                 MapHeight = mapHeight,
-                MinX = gameState.GalacticObjects.Min(o => o.Coordinate.X),
-                MinY = gameState.GalacticObjects.Min(o => o.Coordinate.Y),
-                MaxX = gameState.GalacticObjects.Max(o => o.Coordinate.X),
-                MaxY = gameState.GalacticObjects.Max(o => o.Coordinate.Y)
+                MinX = gameState.GalacticObjects.Values.Min(o => o.Coordinate.X),
+                MinY = gameState.GalacticObjects.Values.Min(o => o.Coordinate.Y),
+                MaxX = gameState.GalacticObjects.Values.Max(o => o.Coordinate.X),
+                MaxY = gameState.GalacticObjects.Values.Max(o => o.Coordinate.Y)
             };
             settings.ModifierX = settings.MapWidth / (settings.MaxX - settings.MinX);
             settings.ModifierY = settings.MapHeight / (settings.MaxY - settings.MinY);
