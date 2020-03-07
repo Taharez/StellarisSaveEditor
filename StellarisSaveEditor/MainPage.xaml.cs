@@ -47,6 +47,7 @@ namespace StellarisSaveEditor
                 UnloadMap();
                 UpdateMap();
                 UpdateHyperLanes();
+                UpdateWormholes();
                 UpdateSystemHighlight();
                 UpdateMarkedSystems();
             }
