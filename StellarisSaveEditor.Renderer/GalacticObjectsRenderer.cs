@@ -2,12 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Windows.Foundation;
 using StellarisSaveEditor.Models;
 
-namespace StellarisSaveEditor.Helpers
+namespace StellarisSaveEditor.Renderer
 {
-    public static class GalacticObjectsRenderer
+    public class GalacticObjectsRenderer
     {
         private struct MapSettings
         {
@@ -21,6 +20,18 @@ namespace StellarisSaveEditor.Helpers
             public double ModifierY { get; set; }
         }
 
+        public struct Point
+        {
+            public double X { get; set; }
+            public double Y { get; set; }
+
+            public Point(double x, double y)
+            {
+                X = x;
+                Y = y;
+            }
+        }
+
         public static string RenderAsSvg(GameState gameState, double mapWidth, double mapHeight, double defaultObjectRadius = 2.0)
         {
             const int estimatedCharactersPerSystem = 60;
@@ -31,9 +42,9 @@ namespace StellarisSaveEditor.Helpers
             {
                 double objectRadius = defaultObjectRadius;
                 var c = GetModifiedCoordinate(mapSettings, galacticObject.Coordinate);
-                svg.Append("M" + (c.X - objectRadius) + "," + (c.Y - objectRadius) + 
-                    "L" + (c.X + objectRadius) + "," + (c.Y - objectRadius) + 
-                    "L" + (c.X + objectRadius) + "," + (c.Y + objectRadius) + 
+                svg.Append("M" + (c.X - objectRadius) + "," + (c.Y - objectRadius) +
+                    "L" + (c.X + objectRadius) + "," + (c.Y - objectRadius) +
+                    "L" + (c.X + objectRadius) + "," + (c.Y + objectRadius) +
                     "L" + (c.X - objectRadius) + "," + (c.Y + objectRadius) + "z");
             }
 

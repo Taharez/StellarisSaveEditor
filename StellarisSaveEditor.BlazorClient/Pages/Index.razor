@@ -1,0 +1,85 @@
+﻿@page "/"
+@using Blazor.Extensions.Canvas.Canvas2D
+@using Blazor.Extensions
+@using System.IO.Compression
+@using System.IO
+@using StellarisSaveEditor.Models
+@using StellarisSaveEditor.Parser
+@using StellarisSaveEditor.Renderer
+
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
+<h1>Stellaris Save Editor</h1>
+
+<InputFile OnChange="HandleFileSelected" />
+
+@if (_file != null)
+{
+    <p>Name: @_file.Name</p>
+    <p>Size in bytes: @_file.Size</p>
+    <p>Last modified date: @_file.LastModified.ToShortDateString()</p>
+    <p>Content type (not always supplied by the browser): @_file.Type</p>
+}
+@if (_gameState != null)
+{
+    <p>Version: @_gameState.Version</p>
+    <p>Number of countries: @_gameState.Countries.Count</p>
+}
+
+<BECanvas Width="600" Height="400" @ref="CanvasReference"></BECanvas>
+
+@code {
+    private bool _shouldRender = true;
+
+    private IFileListEntry _file;
+    private GameState _gameState;
+
+    private Canvas2DContext _context;
+    protected BECanvasComponent CanvasReference;
+
+    protected override bool ShouldRender()
+    {
+        var shouldRender = _shouldRender;
+        _shouldRender = false;
+        return shouldRender;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        _context = await this.CanvasReference.CreateCanvas2DAsync();
+        await _context.SetFillStyleAsync("black");
+
+        await _context.FillRectAsync(0, 0, CanvasReference.Width, CanvasReference.Height);
+    }
+
+    async void HandleFileSelected(IFileListEntry[] files)
+    {
+        _shouldRender = false;
+
+        _file = files.FirstOrDefault();
+        if (_file == null)
+            return;
+
+        using var logger = new BlazorLogger();
+        var parser = new GameStateParser(logger);
+
+        await using var ms = new MemoryStream();
+        await _file.Data.CopyToAsync(ms);
+        ms.Position = 0; // rewind
+
+        using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+        var gameStateFile = zip.Entries.FirstOrDefault(e => e.FullName.Equals("gamestate"));
+        if (gameStateFile == null)
+            return;
+
+        _gameState = await parser.ParseGameStateAsync(gameStateFile.Open());
+
+        // Update map
+        await _context.BeginPathAsync();
+
+        await _context.ClosePathAsync();
+
+        _shouldRender = true;
+        StateHasChanged();
+    }
+}

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.IO.Compression;
@@ -15,6 +16,7 @@ using StellarisSaveEditor.Models;
 using StellarisSaveEditor.Models.Enums;
 using StellarisSaveEditor.Helpers;
 using StellarisSaveEditor.Parser;
+using Path = Windows.UI.Xaml.Shapes.Path;
 
 // The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
@@ -158,10 +160,8 @@ namespace StellarisSaveEditor
                     var gamestateFile = await GetLocalGameStateCopy(saveFile);
                     if (gamestateFile != null)
                     {
-                        var gamestateText = await FileIO.ReadLinesAsync(gamestateFile);
-
                         var parser = new GameStateParser(logger);
-                        GameState = parser.ParseGamestate(gamestateText.ToList());
+                        GameState = await parser.ParseGameStateAsync(await gamestateFile.OpenStreamForReadAsync());
 
                         VersionLabel.Text = GameState.Version;
                         SaveNameLabel.Text = GameState.Name;

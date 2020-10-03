@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
 using System;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using StellarisSaveEditor.Models;
 using StellarisSaveEditor.Models.Enums;
 using StellarisSaveEditor.Models.Extensions;
@@ -17,28 +19,36 @@ namespace StellarisSaveEditor.Parser
             _logger = logger;
         }
 
-        public GameState ParseGamestate(List<string> gameStateText)
+        public GameState ParseGameStateFromRaw(GameStateRaw gameStateRaw)
         {
-            var gameStateRaw = new GameStateRaw();
-            var gameState = new GameState() { GameStateRaw = gameStateRaw };
-
-            var rawParser = new GameStateRawParser();
-            rawParser.ParseGamestateRaw(gameStateRaw, gameStateText);
+            var gameState = new GameState {GameStateRaw = gameStateRaw};
             
-            ParseGamestateCommon(gameState);
+            ParseGameStateCommon(gameState);
 
-            ParseGamestateGalacticObjects(gameState);
+            ParseGameStateGalacticObjects(gameState);
 
-            ParseGamestateCountries(gameState);
+            ParseGameStateCountries(gameState);
 
-            ParseGamestateBypasses(gameState);
+            ParseGameStateBypasses(gameState);
 
             ParseGamestateWormholes(gameState);
 
             return gameState;
         }
 
-        private void ParseGamestateCommon(GameState gameState)
+        public async Task<GameState> ParseGameStateAsync(Stream gameStateStream)
+        {
+            var gameStateRaw = new GameStateRaw();
+            var rawParser = new GameStateRawParser();
+            var isRawParsed = await rawParser.ParseGameStateRawAsync(gameStateRaw, gameStateStream);
+
+            if (!isRawParsed)
+                return null;
+            
+            return ParseGameStateFromRaw(gameStateRaw);
+        }
+
+        private void ParseGameStateCommon(GameState gameState)
         {
             var gameStateRaw = gameState.GameStateRaw;
             
@@ -53,7 +63,7 @@ namespace StellarisSaveEditor.Parser
             gameState.Player.CountryIndex = playerCountryIndex;
         }
 
-        private void ParseGamestateGalacticObjects(GameState gameState)
+        private void ParseGameStateGalacticObjects(GameState gameState)
         {
             var gameStateRaw = gameState.GameStateRaw;
 
@@ -133,7 +143,7 @@ namespace StellarisSaveEditor.Parser
             }
         }
 
-        private void ParseGamestateCountries(GameState gameState)
+        private void ParseGameStateCountries(GameState gameState)
         {
             var gameStateRaw = gameState.GameStateRaw;
 
@@ -158,7 +168,7 @@ namespace StellarisSaveEditor.Parser
             }
         }
 
-        private void ParseGamestateBypasses(GameState gameState)
+        private void ParseGameStateBypasses(GameState gameState)
         {
             var gameStateRaw = gameState.GameStateRaw;
 
