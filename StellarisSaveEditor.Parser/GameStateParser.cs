@@ -78,7 +78,7 @@ namespace StellarisSaveEditor.Parser
                     _logger.Log(LogLevel.Information, "Unknown galactic object type: " + typeString);
                 }
                 galacticObject.Type = typeString;
-                galacticObject.Name = galacticObjectItem.GetAttributeValueByName("name");
+                galacticObject.Name = ParseLocalizableString(galacticObjectItem);
 
                 // Planets 
                 var planetAttributes = galacticObjectItem.GetAttributeValuesByName("planet");
@@ -234,6 +234,17 @@ namespace StellarisSaveEditor.Parser
             {
                 Type = type,
                 Id = id
+            };
+        }
+
+        private LocalizableString ParseLocalizableString(GameStateRawSection rawSection)
+        {
+            var nameSection = rawSection.GetChildSectionByName("name");
+            var key = nameSection.GetAttributeValueByName("key");
+
+            return new LocalizableString
+            {
+                Key = key
             };
         }
     }

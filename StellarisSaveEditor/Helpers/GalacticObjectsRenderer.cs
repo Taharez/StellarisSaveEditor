@@ -121,7 +121,7 @@ namespace StellarisSaveEditor.Helpers
         public static List<Point> GetMatchingNameSystemCoordinates(GameState gameState, double mapWidth, double mapHeight, string name)
         {
             var matchingNameSystemCoordinates = new List<Point>();
-            var matchingNameSystems = gameState.GalacticObjects.Values.Where(o => o.Name.ToLower().StartsWith(name));
+            var matchingNameSystems = gameState.GalacticObjects.Values.Where(o => o.Name.Key.ToLower().StartsWith(name));
             var mapSettings = GetMapSettings(gameState, mapWidth, mapHeight);
             foreach (var matchingNameSystem in matchingNameSystems)
             {

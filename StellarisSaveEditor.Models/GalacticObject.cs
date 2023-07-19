@@ -20,7 +20,7 @@ namespace StellarisSaveEditor.Models
 
         public string Type { get; set; }
 
-        public string Name { get; set; }
+        public LocalizableString Name { get; set; }
 
         public List<int> PlanetIndices { get; set; }
 
