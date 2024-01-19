@@ -22,10 +22,11 @@ namespace StellarisSaveEditor.Parser
                 {
                     // Skip blank lines
                 }
-                else if (currentLine.Contains("={"))
+                else if (currentLine.EndsWith("=") || currentLine.Contains("={"))
                 {
                     // Named section start
-                    var sectionName = currentLine.Substring(0, currentLine.IndexOf("={", StringComparison.InvariantCulture));
+                    var splitter = currentLine.EndsWith("=") ? "=" : "={";
+                    var sectionName = currentLine.Substring(0, currentLine.IndexOf(splitter, StringComparison.InvariantCulture));
                     var section = new GameStateRawSection
                     {
                         Parent = currentSection,
@@ -50,6 +51,11 @@ namespace StellarisSaveEditor.Parser
                     {
                         // Start of new section, update current section until end of scope
                         currentSection = section;
+                    }
+                    if (currentLine.EndsWith("="))
+                    {
+                        // Skip next line since it will be the opening { of the named section and we don't want to create double sections
+                        ++i;
                     }
                 }
                 else if (currentLine.Contains("{"))
