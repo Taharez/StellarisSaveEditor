@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
-using Windows.UI.Xaml.Markup;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Shapes;
+using Microsoft.UI.Xaml.Markup;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Shapes;
 
 namespace StellarisSaveEditor.Helpers
 {

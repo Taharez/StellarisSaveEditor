@@ -1,0 +1,94 @@
+﻿@page "/"
+
+@using System.IO.Compression
+@using System.IO
+@using Blazor.Extensions.Canvas.Canvas2D
+@using Blazor.Extensions
+@using StellarisSaveEditor.Models
+@using StellarisSaveEditor.Common
+@using StellarisSaveEditor.Parser
+@using StellarisSaveEditor.BlazorWasm.Helpers
+
+<PageTitle>Stellaris Save Viewer</PageTitle>
+
+<div class="top-row px-4" style="padding-bottom: 10px;">
+    <InputFile OnChange="HandleFileSelected" />
+</div>
+
+<BECanvas Width="600" Height="600" @ref="CanvasReference"></BECanvas>
+
+@code {
+
+    private IBrowserFile? _file;
+
+    private bool _shouldRender = true;
+    private Canvas2DContext? _context;
+    protected BECanvasComponent? CanvasReference;
+
+    private ILogger _logger = new BlazorLogger();
+
+    private GameState? _gameState { get; set; }
+
+    protected override bool ShouldRender()
+    {
+        var shouldRender = _shouldRender;
+        _shouldRender = false;
+        return shouldRender;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (CanvasReference == null)
+            return;
+
+        _context = await CanvasReference.CreateCanvas2DAsync();
+
+        if (_gameState != null)
+        {
+            await BlazorRenderer.Render(_context, CanvasReference.Width, CanvasReference.Height, _gameState, new List<string>{}, null);
+        }
+    }
+
+    async void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        _shouldRender = false;
+
+        try
+        {
+            _file = e.File;
+
+            using var fileStream = _file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            await using var ms = new MemoryStream();
+            await fileStream.CopyToAsync(ms);
+            ms.Position = 0; // rewind
+
+            using var zip = new ZipArchive(ms, ZipArchiveMode.Read);
+            var gameStateFile = zip.Entries.FirstOrDefault(e => e.FullName.Equals("gamestate"));
+            if (gameStateFile == null)
+                return;
+
+            using var reader = new StreamReader(gameStateFile.Open());
+            var gamestateText = ReadLines(reader).ToList();
+
+            var parser = new GameStateParser(_logger);
+            var parseTask = Task.Run(() => parser.ParseGamestate(gamestateText.ToList()));
+            _gameState = await parseTask;
+
+            _shouldRender = true;
+            StateHasChanged();
+        }
+        catch(Exception ex)
+        {
+            _logger.Log(LogLevel.Critical, "Error reading file: " + ex.Message);
+        }
+    }
+
+    public IEnumerable<string> ReadLines(StreamReader reader)
+    {
+        string? line;
+        while ((line = reader.ReadLine()) != null)
+        {
+            yield return line;
+        }
+    }
+}
