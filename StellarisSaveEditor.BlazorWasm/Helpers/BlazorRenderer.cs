@@ -13,6 +13,7 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
             await RenderSystems(context, gameState, mapSettings);
             await RenderHyperLanes(context, gameState, mapSettings);
             await RenderWormholes(context, gameState, mapSettings);
+            await RenderWormholeConnections(context, gameState, mapSettings);
             await RenderPlayerSystem(context, gameState, mapSettings);
             await RenderMarkedSystemCoordinates(context, gameState, mapSettings, markedFlags);
             await RenderMatchingNameSystemCoordinates(context, gameState, mapSettings, searchSystemName);
@@ -32,6 +33,9 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
 
         private static async Task RenderHyperLanes(Canvas2DContext context, GameState gameState, MapSettings mapSettings)
         {
+            if (!mapSettings.ShowHyperLanes)
+                return;
+
             await context.BeginBatchAsync();
             await context.BeginPathAsync();
             await context.SetStrokeStyleAsync("gray");
@@ -56,6 +60,9 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
 
         private static async Task RenderWormholes(Canvas2DContext context, GameState gameState, MapSettings mapSettings, double objectRadius = 5.0)
         {
+            if (!mapSettings.ShowWormholes)
+                return;
+
             await context.BeginBatchAsync();
             await context.BeginPathAsync();
             await context.SetStrokeStyleAsync("orange");
@@ -68,11 +75,13 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
             }
             await context.StrokeAsync();
             await context.EndBatchAsync();
-            await RenderWormholeConnections(context, gameState, mapSettings);
         }
 
         private static async Task RenderWormholeConnections(Canvas2DContext context, GameState gameState, MapSettings mapSettings)
         {
+            if (!mapSettings.ShowWormholeConnections)
+                return;
+
             await context.BeginBatchAsync();
             await context.BeginPathAsync();
             await context.SetStrokeStyleAsync("yellow");
@@ -100,6 +109,9 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
 
         private static async Task RenderPlayerSystem(Canvas2DContext context, GameState gameState, MapSettings mapSettings, double objectRadius = 5.0)
         {
+            if (!mapSettings.ShowHomeSystem)
+                return;
+
             var playerSystem = gameState.GalacticObjects[gameState.Countries[gameState.Player.CountryIndex].StartingSystemIndex];
             var c = mapSettings.GetModifiedCoordinate(playerSystem.Coordinate);
             await context.BeginBatchAsync();

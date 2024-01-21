@@ -1,4 +1,5 @@
 ﻿@page "/"
+@implements IDisposable
 
 @using System.IO.Compression
 @using System.IO
@@ -12,7 +13,21 @@
 <PageTitle>Stellaris Save Viewer</PageTitle>
 
 <div class="top-row px-4" style="padding-bottom: 10px;">
-    <InputFile OnChange="HandleFileSelected" />
+    <EditForm EditContext="_editContext">
+        <InputFile OnChange="HandleFileSelected" />
+        <label for="show-hyper-lanes">Show hyper lanes</label>
+        <InputCheckbox id="show-hyper-lanes" @bind-Value="MapSettings!.ShowHyperLanes"></InputCheckbox>
+        <label for="show-home-system">Show home system</label>
+        <InputCheckbox id="show-home-system" @bind-Value="MapSettings!.ShowHomeSystem"></InputCheckbox>
+        <label for="show-wormholes">Show wormholes</label>
+        <InputCheckbox id="show-wormholes" @bind-Value="MapSettings!.ShowWormholes"></InputCheckbox>
+        <label for="show-wormhole-connections">Show wormhole connections</label>
+        <InputCheckbox id="show-wormhole-connections" @bind-Value="MapSettings!.ShowWormholeConnections"></InputCheckbox>
+        <label for="show-gateway-connections">Show gateway connections</label>
+        <InputCheckbox id="show-gateway-connections" @bind-Value="MapSettings!.ShowGatewayConnections"></InputCheckbox>
+        <label for="show-lgate-connections">Show L-Gate connections</label>
+        <InputCheckbox id="show-lgate-connections" @bind-Value="MapSettings!.ShowLgateConnections"></InputCheckbox>
+    </EditForm>
 </div>
 
 <BECanvas Width="600" Height="600" @ref="CanvasReference"></BECanvas>
@@ -25,10 +40,33 @@
     private Canvas2DContext? _context;
 
     protected BECanvasComponent? CanvasReference;
+    protected InputCheckbox? ShowHomeSystemCheckbox;
 
     private ILogger _logger = new BlazorLogger();
 
     private GameState? _gameState { get; set; }
+
+    public MapSettings? MapSettings{ get; set; }
+    private EditContext? _editContext;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        MapSettings ??= new();
+        _editContext = new EditContext(MapSettings);
+        _editContext.OnFieldChanged += OnModelChanged;
+    }
+
+    private void OnModelChanged(Object sender, FieldChangedEventArgs args)
+    {
+        _shouldRender = true;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        _editContext!.OnFieldChanged -= OnModelChanged;
+    }
 
     protected override bool ShouldRender()
     {
@@ -46,8 +84,7 @@
 
         if (_gameState != null)
         {
-            var mapSettings = new MapSettings(_gameState, CanvasReference.Width, CanvasReference.Height);
-            await BlazorRenderer.Render(_context, mapSettings, _gameState, new List<string>{}, null);
+            await BlazorRenderer.Render(_context, MapSettings!, _gameState, new List<string>{}, null);
         }
     }
 
@@ -76,6 +113,7 @@
             var parseTask = Task.Run(() => parser.ParseGamestate(gamestateText.ToList()));
             _gameState = await parseTask;
 
+            MapSettings!.Init(_gameState, CanvasReference!.Width, CanvasReference!.Height);
             _shouldRender = true;
             StateHasChanged();
         }
