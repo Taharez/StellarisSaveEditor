@@ -23,6 +23,7 @@
 
     private bool _shouldRender = true;
     private Canvas2DContext? _context;
+
     protected BECanvasComponent? CanvasReference;
 
     private ILogger _logger = new BlazorLogger();
@@ -45,7 +46,8 @@
 
         if (_gameState != null)
         {
-            await BlazorRenderer.Render(_context, CanvasReference.Width, CanvasReference.Height, _gameState, new List<string>{}, null);
+            var mapSettings = new MapSettings(_gameState, CanvasReference.Width, CanvasReference.Height);
+            await BlazorRenderer.Render(_context, mapSettings, _gameState, new List<string>{}, null);
         }
     }
 
