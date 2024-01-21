@@ -15,18 +15,16 @@
 <div class="top-row px-4" style="padding-bottom: 10px;">
     <EditForm EditContext="_editContext">
         <InputFile OnChange="HandleFileSelected" />
-        <label for="show-hyper-lanes">Show hyper lanes</label>
+        <label for="show-hyper-lanes">Hyper lanes</label>
         <InputCheckbox id="show-hyper-lanes" @bind-Value="MapSettings!.ShowHyperLanes"></InputCheckbox>
-        <label for="show-home-system">Show home system</label>
+        <label for="show-home-system">Home system</label>
         <InputCheckbox id="show-home-system" @bind-Value="MapSettings!.ShowHomeSystem"></InputCheckbox>
-        <label for="show-wormholes">Show wormholes</label>
+        <label for="show-wormholes">Wormholes</label>
         <InputCheckbox id="show-wormholes" @bind-Value="MapSettings!.ShowWormholes"></InputCheckbox>
-        <label for="show-wormhole-connections">Show wormhole connections</label>
-        <InputCheckbox id="show-wormhole-connections" @bind-Value="MapSettings!.ShowWormholeConnections"></InputCheckbox>
-        <label for="show-gateway-connections">Show gateway connections</label>
-        <InputCheckbox id="show-gateway-connections" @bind-Value="MapSettings!.ShowGatewayConnections"></InputCheckbox>
-        <label for="show-lgate-connections">Show L-Gate connections</label>
-        <InputCheckbox id="show-lgate-connections" @bind-Value="MapSettings!.ShowLgateConnections"></InputCheckbox>
+        <label for="show-gateway-connections">Gateways</label>
+        <InputCheckbox id="show-gateway-connections" @bind-Value="MapSettings!.ShowGateways"></InputCheckbox>
+        <label for="show-lgate-connections">L-Gates</label>
+        <InputCheckbox id="show-lgate-connections" @bind-Value="MapSettings!.ShowLgates"></InputCheckbox>
     </EditForm>
 </div>
 

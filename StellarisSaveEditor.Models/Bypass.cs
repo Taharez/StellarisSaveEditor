@@ -1,4 +1,6 @@
-﻿namespace StellarisSaveEditor.Models
+﻿using System.Collections.Generic;
+
+namespace StellarisSaveEditor.Models
 {
     public class Bypass
     {
@@ -11,5 +13,7 @@
         public Owner Owner { get; set; }
 
         public int? LinkedToBypassId { get; set; }
+
+        public List<int> Connections { get; set; }
     }
 }

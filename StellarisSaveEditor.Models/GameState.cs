@@ -7,6 +7,9 @@ namespace StellarisSaveEditor.Models
         // Raw file date used to build this game state
         public GameStateRaw GameStateRaw { get; set; }
 
+        // Pre-built indices to allow quick lookup during rendering etc
+        public GameStateIndices Indices { get; set; }
+
         // Game state properties parsed from raw game state
         public string Version { get; set; }
 
@@ -41,5 +44,11 @@ namespace StellarisSaveEditor.Models
         public Dictionary<int, Bypass> Bypasses { get; set; }
 
         public Dictionary<int, NaturalWormhole> NaturalWormholes { get; set; }
+
+        public GameState()
+        {
+            GameStateRaw = new GameStateRaw();
+            Indices = new GameStateIndices();
+        }
     }
 }

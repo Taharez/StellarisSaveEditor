@@ -19,11 +19,10 @@ namespace StellarisSaveEditor.Parser
 
         public GameState ParseGamestate(List<string> gameStateText)
         {
-            var gameStateRaw = new GameStateRaw();
-            var gameState = new GameState() { GameStateRaw = gameStateRaw };
+            var gameState = new GameState();
 
             var rawParser = new GameStateRawParser();
-            rawParser.ParseGamestateRaw(gameStateRaw, gameStateText);
+            rawParser.ParseGamestateRaw(gameState.GameStateRaw, gameStateText);
             
             ParseGamestateCommon(gameState);
 
@@ -58,6 +57,7 @@ namespace StellarisSaveEditor.Parser
             var gameStateRaw = gameState.GameStateRaw;
 
             gameState.GalacticObjects = new Dictionary<int, GalacticObject>();
+            gameState.Indices.GalacticObjectByBypassId = new Dictionary<int, GalacticObject>();
             var galacticObjectSection = gameStateRaw.RootSection.GetChildSectionByName("galactic_object");
             foreach (var galacticObjectItem in galacticObjectSection.Sections)
             {
@@ -110,6 +110,17 @@ namespace StellarisSaveEditor.Parser
                         double.TryParse(hyperLaneSection.GetAttributeValueByName("length"), out var hyperLaneLength);
                         hyperLane.Length = hyperLaneLength;
                         galacticObject.HyperLanes.Add(hyperLane);
+                    }
+                }
+
+                // Bypasses
+                var bypasses = ParseIntList(galacticObjectItem.GetChildSectionByName("bypasses"));
+                if (bypasses.Any())
+                {
+                    foreach (var bypassId in bypasses)
+                    {;
+                        galacticObject.Bypasses.Add(bypassId);
+                        gameState.Indices.GalacticObjectByBypassId.Add(bypassId, galacticObject);
                     }
                 }
 
@@ -177,6 +188,7 @@ namespace StellarisSaveEditor.Parser
                     int.TryParse(linkedToAttribute.Value, out var linkedTo);
                     bypass.LinkedToBypassId = linkedTo;
                 }
+                bypass.Connections = ParseIntList(bypassSectionItem.GetChildSectionByName("connections"));
 
                 bypass.Owner = ParseOwner(bypassSectionItem);
 
@@ -246,6 +258,15 @@ namespace StellarisSaveEditor.Parser
             {
                 Key = key
             };
+        }
+        private List<int> ParseIntList(GameStateRawSection rawSection)
+        {
+            if (rawSection == null)
+                return new List<int>();
+            var rawAttribute = rawSection.Attributes.FirstOrDefault();
+            if (rawAttribute == null)
+                return new List<int>();
+            return rawAttribute.Value.Split(' ').Select((i) => int.Parse(i)).ToList();
         }
     }
 }

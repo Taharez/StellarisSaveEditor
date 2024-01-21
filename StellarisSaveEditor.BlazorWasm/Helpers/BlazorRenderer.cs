@@ -13,7 +13,8 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
             await RenderSystems(context, gameState, mapSettings);
             await RenderHyperLanes(context, gameState, mapSettings);
             await RenderWormholes(context, gameState, mapSettings);
-            await RenderWormholeConnections(context, gameState, mapSettings);
+            await RenderGateways(context, gameState, mapSettings);
+            await RenderLgates(context, gameState, mapSettings);
             await RenderPlayerSystem(context, gameState, mapSettings);
             await RenderMarkedSystemCoordinates(context, gameState, mapSettings, markedFlags);
             await RenderMatchingNameSystemCoordinates(context, gameState, mapSettings, searchSystemName);
@@ -58,53 +59,60 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
             await context.EndBatchAsync();
         }
 
-        private static async Task RenderWormholes(Canvas2DContext context, GameState gameState, MapSettings mapSettings, double objectRadius = 5.0)
+        private static async Task RenderBypasses(Canvas2DContext context, GameState gameState, MapSettings mapSettings, bool renderConnections, string bypassType, string color, double objectRadius = 5.0)
         {
-            if (!mapSettings.ShowWormholes)
-                return;
-
             await context.BeginBatchAsync();
             await context.BeginPathAsync();
-            await context.SetStrokeStyleAsync("orange");
-            foreach (var wormhole in gameState.NaturalWormholes.Values)
+            await context.SetStrokeStyleAsync(color);
+            foreach (var bypass in gameState.Bypasses.Values.Where(bp => bp.BypassType == bypassType))
             {
-                var wormholeGalacticObject = gameState.GalacticObjects[(int)wormhole.Coordinate.Origin];
-                var c = mapSettings.GetModifiedCoordinate(wormholeGalacticObject.Coordinate);
-                await context.MoveToAsync(c.X, c.Y);
-                await context.ArcAsync(c.X, c.Y, objectRadius, 0, 360);
+                var hasObject = gameState.Indices.GalacticObjectByBypassId.TryGetValue(bypass.Id, out var galacticObject);
+                if (!hasObject)
+                    continue;
+
+                var p1 = mapSettings.GetModifiedCoordinate(galacticObject!.Coordinate);
+                await context.MoveToAsync(p1.X, p1.Y);
+                await context.ArcAsync(p1.X, p1.Y, objectRadius, 0, 360);
+
+                if (renderConnections)
+                {
+                    foreach (var connectedBypassId in bypass.Connections)
+                    {
+                        var hasConnectedObject = gameState.Indices.GalacticObjectByBypassId.TryGetValue(connectedBypassId, out var connectedGalacticObject);
+                        if (!hasConnectedObject || connectedBypassId > bypass.Id)
+                            continue;
+                        var p2 = mapSettings.GetModifiedCoordinate(connectedGalacticObject!.Coordinate);
+                        await context.MoveToAsync(p1.X, p1.Y);
+                        await context.LineToAsync(p2.X, p2.Y);
+                    }
+                }
             }
             await context.StrokeAsync();
             await context.EndBatchAsync();
         }
 
-        private static async Task RenderWormholeConnections(Canvas2DContext context, GameState gameState, MapSettings mapSettings)
+        private static async Task RenderWormholes(Canvas2DContext context, GameState gameState, MapSettings mapSettings)
         {
-            if (!mapSettings.ShowWormholeConnections)
+            if (!mapSettings.ShowWormholes)
                 return;
 
-            await context.BeginBatchAsync();
-            await context.BeginPathAsync();
-            await context.SetStrokeStyleAsync("yellow");
-            foreach (var wormholeBypass in gameState.Bypasses.Values.Where(bp => bp.BypassType == "wormhole"))
-            {
-                // Only render wormhole connection once
-                if (!(wormholeBypass.Id < wormholeBypass.LinkedToBypassId))
-                    continue;
+            await RenderBypasses(context, gameState, mapSettings, true, "wormhole", "yellow");
+        }
 
-                var startingWormhole = gameState.NaturalWormholes.Values.FirstOrDefault(wh => wh.BypassId == wormholeBypass.Id);
-                var targetWormhole = gameState.NaturalWormholes.Values.FirstOrDefault(wh => wh.BypassId == wormholeBypass.LinkedToBypassId);
-                if (startingWormhole == null || targetWormhole == null)
-                    continue;
+        private static async Task RenderGateways(Canvas2DContext context, GameState gameState, MapSettings mapSettings)
+        {
+            if (!mapSettings.ShowGateways)
+                return;
 
-                var startingGalacticObject = gameState.GalacticObjects[(int)startingWormhole.Coordinate.Origin];
-                var targetGalacticObject = gameState.GalacticObjects[(int)targetWormhole.Coordinate.Origin];
-                var p1 = mapSettings.GetModifiedCoordinate(startingGalacticObject.Coordinate);
-                var p2 = mapSettings.GetModifiedCoordinate(targetGalacticObject.Coordinate);
-                await context.MoveToAsync(p1.X, p1.Y);
-                await context.LineToAsync(p2.X, p2.Y);
-            }
-            await context.StrokeAsync();
-            await context.EndBatchAsync();
+            await RenderBypasses(context, gameState, mapSettings, false, "gateway", "lightblue");
+        }
+
+        private static async Task RenderLgates(Canvas2DContext context, GameState gameState, MapSettings mapSettings)
+        {
+            if (!mapSettings.ShowLgates)
+                return;
+
+            await RenderBypasses(context, gameState, mapSettings, false, "lgate", "purple");
         }
 
         private static async Task RenderPlayerSystem(Canvas2DContext context, GameState gameState, MapSettings mapSettings, double objectRadius = 5.0)

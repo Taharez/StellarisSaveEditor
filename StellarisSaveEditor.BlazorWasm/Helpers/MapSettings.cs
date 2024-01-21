@@ -16,9 +16,8 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
         public bool ShowHyperLanes { get; set; }
         public bool ShowHomeSystem { get; set; }
         public bool ShowWormholes { get; set; }
-        public bool ShowWormholeConnections { get; set; }
-        public bool ShowGatewayConnections { get; set; }
-        public bool ShowLgateConnections { get; set; }
+        public bool ShowGateways { get; set; }
+        public bool ShowLgates { get; set; }
 
         public Point GetModifiedCoordinate(Coordinate coordinate)
         {
@@ -42,9 +41,8 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
             ShowHyperLanes = true;
             ShowHomeSystem = true;
             ShowWormholes = true;
-            ShowWormholeConnections = true;
-            ShowGatewayConnections = true;
-            ShowLgateConnections = true;
+            ShowGateways = true;
+            ShowLgates = true;
         }
     }
 }

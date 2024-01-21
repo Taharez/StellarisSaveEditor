@@ -10,6 +10,7 @@ namespace StellarisSaveEditor.Models
             PlanetIndices = new List<int>();
             AmbientObjects = new List<int>();
             HyperLanes = new List<HyperLane>();
+            Bypasses = new List<int>();
             AsteroidBelts = new List<AsteroidBelt>();
             GalacticObjectFlags = new List<string>();
         }
@@ -29,6 +30,7 @@ namespace StellarisSaveEditor.Models
         public string StarClass { get; set; }
 
         public List<HyperLane> HyperLanes { get; set; }
+        public List<int> Bypasses { get; set; }
 
         public List<AsteroidBelt> AsteroidBelts { get; set; }
 
