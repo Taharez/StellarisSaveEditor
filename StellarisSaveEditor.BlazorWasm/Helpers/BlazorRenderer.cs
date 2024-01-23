@@ -7,11 +7,13 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
     {
         private readonly Canvas2DContext _context;
         private readonly MapSettings _mapSettings;
+        private readonly FilterSettings _filterSettings;
         private readonly GameState _gameState;
 
-        public BlazorRenderer(Canvas2DContext context, MapSettings mapSettings, GameState gameState) {
+        public BlazorRenderer(Canvas2DContext context, MapSettings mapSettings, FilterSettings filterSettings, GameState gameState) {
             _context = context;
             _mapSettings = mapSettings;
+            _filterSettings = filterSettings;
             _gameState = gameState;
         }
 
@@ -44,7 +46,7 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
 
         private async Task RenderHyperLanes()
         {
-            if (!_mapSettings.ShowHyperLanes)
+            if (!_filterSettings.ShowHyperLanes)
                 return;
 
             await _context.BeginBatchAsync();
@@ -103,7 +105,7 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
 
         private async Task RenderWormholes()
         {
-            if (!_mapSettings.ShowWormholes)
+            if (!_filterSettings.ShowWormholes)
                 return;
 
             await RenderBypasses(true, "wormhole", "yellow");
@@ -111,7 +113,7 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
 
         private async Task RenderGateways()
         {
-            if (!_mapSettings.ShowGateways)
+            if (!_filterSettings.ShowGateways)
                 return;
 
             await RenderBypasses(false, "gateway", "lightblue");
@@ -119,7 +121,7 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
 
         private async Task RenderLgates()
         {
-            if (!_mapSettings.ShowLgates)
+            if (!_filterSettings.ShowLgates)
                 return;
 
             await RenderBypasses(false, "lgate", "purple");
@@ -127,7 +129,7 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
 
         private async Task RenderPlayerSystem(double objectRadius = 5.0)
         {
-            if (!_mapSettings.ShowHomeSystem)
+            if (!_filterSettings.ShowHomeSystem)
                 return;
 
             var playerSystem = _gameState.GalacticObjects[_gameState.Countries[_gameState.Player.CountryIndex].StartingSystemIndex];

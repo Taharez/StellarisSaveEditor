@@ -13,12 +13,6 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
         public double ModifierX { get; set; }
         public double ModifierY { get; set; }
 
-        public bool ShowHyperLanes { get; set; }
-        public bool ShowHomeSystem { get; set; }
-        public bool ShowWormholes { get; set; }
-        public bool ShowGateways { get; set; }
-        public bool ShowLgates { get; set; }
-
         public Point GetModifiedCoordinate(Coordinate coordinate)
         {
             return new Point(
@@ -37,12 +31,6 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
             MaxY = gameState.GalacticObjects.Values.Max(o => o.Coordinate.Y) + padding;
             ModifierX = MapWidth / (MaxX - MinX);
             ModifierY = MapHeight / (MaxY - MinY);
-
-            ShowHyperLanes = true;
-            ShowHomeSystem = true;
-            ShowWormholes = true;
-            ShowGateways = true;
-            ShowLgates = true;
         }
     }
 }

@@ -13,18 +13,18 @@
 <PageTitle>Stellaris Save Viewer</PageTitle>
 
 <div class="top-row px-4" style="padding-bottom: 10px;">
-    <EditForm EditContext="_editContext">
-        <InputFile OnChange="HandleFileSelected" />
+    <InputFile OnChange="HandleFileSelected" />
+    <EditForm EditContext="_filterEditContext">
         <label for="show-hyper-lanes">Hyper lanes</label>
-        <InputCheckbox id="show-hyper-lanes" @bind-Value="MapSettings!.ShowHyperLanes"></InputCheckbox>
+        <InputCheckbox id="show-hyper-lanes" @bind-Value="FilterSettings!.ShowHyperLanes"></InputCheckbox>
         <label for="show-home-system">Home system</label>
-        <InputCheckbox id="show-home-system" @bind-Value="MapSettings!.ShowHomeSystem"></InputCheckbox>
+        <InputCheckbox id="show-home-system" @bind-Value="FilterSettings!.ShowHomeSystem"></InputCheckbox>
         <label for="show-wormholes">Wormholes</label>
-        <InputCheckbox id="show-wormholes" @bind-Value="MapSettings!.ShowWormholes"></InputCheckbox>
+        <InputCheckbox id="show-wormholes" @bind-Value="FilterSettings!.ShowWormholes"></InputCheckbox>
         <label for="show-gateway-connections">Gateways</label>
-        <InputCheckbox id="show-gateway-connections" @bind-Value="MapSettings!.ShowGateways"></InputCheckbox>
+        <InputCheckbox id="show-gateway-connections" @bind-Value="FilterSettings!.ShowGateways"></InputCheckbox>
         <label for="show-lgate-connections">L-Gates</label>
-        <InputCheckbox id="show-lgate-connections" @bind-Value="MapSettings!.ShowLgates"></InputCheckbox>
+        <InputCheckbox id="show-lgate-connections" @bind-Value="FilterSettings!.ShowLgates"></InputCheckbox>
     </EditForm>
 </div>
 
@@ -44,19 +44,21 @@
 
     private GameState? _gameState { get; set; }
 
-    private MapSettings? MapSettings{ get; set; }
-    private EditContext? _editContext;
-    private BlazorRenderer _renderer { get; set; }
+    private MapSettings? MapSettings { get; set; }
+    private FilterSettings? FilterSettings { get; set; }
+    private EditContext? _filterEditContext;
+    private BlazorRenderer? _renderer { get; set; }
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
         MapSettings ??= new();
-        _editContext = new EditContext(MapSettings);
-        _editContext.OnFieldChanged += OnModelChanged;
+        FilterSettings ??= new();
+        _filterEditContext = new EditContext(MapSettings);
+        _filterEditContext.OnFieldChanged += OnFilterModelChanged;
     }
 
-    private void OnModelChanged(Object sender, FieldChangedEventArgs args)
+    private void OnFilterModelChanged(Object? sender, FieldChangedEventArgs args)
     {
         _shouldRender = true;
         StateHasChanged();
@@ -64,7 +66,7 @@
 
     public void Dispose()
     {
-        _editContext!.OnFieldChanged -= OnModelChanged;
+        _filterEditContext!.OnFieldChanged -= OnFilterModelChanged;
     }
 
     protected override bool ShouldRender()
@@ -81,7 +83,7 @@
 
         if (_gameState != null)
         {
-            await _renderer.Render(new List<string>{}, null);
+            await _renderer!.Render(new List<string>{}, null);
         }
     }
 
@@ -112,7 +114,7 @@
 
             MapSettings!.Init(_gameState, CanvasReference!.Width, CanvasReference!.Height);
             _context = await CanvasReference.CreateCanvas2DAsync();
-            _renderer = new BlazorRenderer(_context, MapSettings, _gameState);
+            _renderer = new BlazorRenderer(_context, MapSettings, FilterSettings!, _gameState);
             _shouldRender = true;
             StateHasChanged();
         }
