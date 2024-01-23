@@ -44,8 +44,9 @@
 
     private GameState? _gameState { get; set; }
 
-    public MapSettings? MapSettings{ get; set; }
+    private MapSettings? MapSettings{ get; set; }
     private EditContext? _editContext;
+    private BlazorRenderer _renderer { get; set; }
 
     protected override void OnInitialized()
     {
@@ -78,11 +79,9 @@
         if (CanvasReference == null)
             return;
 
-        _context = await CanvasReference.CreateCanvas2DAsync();
-
         if (_gameState != null)
         {
-            await BlazorRenderer.Render(_context, MapSettings!, _gameState, new List<string>{}, null);
+            await _renderer.Render(new List<string>{}, null);
         }
     }
 
@@ -112,6 +111,8 @@
             _gameState = await parseTask;
 
             MapSettings!.Init(_gameState, CanvasReference!.Width, CanvasReference!.Height);
+            _context = await CanvasReference.CreateCanvas2DAsync();
+            _renderer = new BlazorRenderer(_context, MapSettings, _gameState);
             _shouldRender = true;
             StateHasChanged();
         }
