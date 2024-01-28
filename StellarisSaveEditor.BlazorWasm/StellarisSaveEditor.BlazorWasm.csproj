@@ -17,6 +17,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Graphics\Logo.dia" />
+    <None Remove="Graphics\Logo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Graphics\Logo.dia" />
+    <Content Include="Graphics\Logo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Blazor.Extensions.Canvas" Version="1.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.1" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.1" PrivateAssets="all" />
