@@ -25,6 +25,8 @@
         <InputCheckbox id="show-gateway-connections" @bind-Value="FilterSettings!.ShowGateways"></InputCheckbox>
         <label for="show-lgate-connections">L-Gates</label>
         <InputCheckbox id="show-lgate-connections" @bind-Value="FilterSettings!.ShowLgates"></InputCheckbox>
+        <label for="search-system-name">Search:</label>
+        <InputText id="search-system-name" @bind-Value="FilterSettings!.SearchSystemName"></InputText>
     </EditForm>
 </div>
 
@@ -83,7 +85,7 @@
 
         if (_gameState != null)
         {
-            await _renderer!.Render(new List<string>{}, null);
+            await _renderer!.Render();
         }
     }
 

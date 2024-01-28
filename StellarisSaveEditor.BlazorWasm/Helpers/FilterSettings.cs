@@ -1,4 +1,5 @@
 ﻿using StellarisSaveEditor.Models;
+using System.Security.Cryptography.X509Certificates;
 
 namespace StellarisSaveEditor.BlazorWasm.Helpers
 {
@@ -9,6 +10,8 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
         public bool ShowWormholes { get; set; }
         public bool ShowGateways { get; set; }
         public bool ShowLgates { get; set; }
+        public IEnumerable<string> MarkedFlags { get; set; }
+        public string? SearchSystemName { get; set; }
 
         public FilterSettings() {
             ShowHyperLanes = true;
@@ -16,6 +19,8 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
             ShowWormholes = false;
             ShowGateways = false;
             ShowLgates = false;
+            MarkedFlags = new List<string>();
+            SearchSystemName = null;
         }
     }
 }

@@ -17,7 +17,7 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
             _gameState = gameState;
         }
 
-        public async Task Render(IEnumerable<string> markedFlags, string? searchSystemName)
+        public async Task Render()
         {
             await _context.SetFillStyleAsync("black");
             await _context.FillRectAsync(0, 0, _mapSettings.MapWidth, _mapSettings.MapHeight);
@@ -28,8 +28,8 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
             await RenderGateways();
             await RenderLgates();
             await RenderPlayerSystem();
-            await RenderMarkedSystemCoordinates(markedFlags);
-            await RenderMatchingNameSystemCoordinates(searchSystemName);
+            await RenderMarkedSystemCoordinates();
+            await RenderMatchingNameSystemCoordinates();
         }
 
         private async Task RenderSystems(int objectWidth = 2)
@@ -52,6 +52,7 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
             await _context.BeginBatchAsync();
             await _context.BeginPathAsync();
             await _context.SetStrokeStyleAsync("gray");
+            await _context.SetLineWidthAsync(1);
             foreach (var galacticObject in _gameState.GalacticObjects.Values)
             {
                 foreach (var hyperLane in galacticObject.HyperLanes)
@@ -76,6 +77,7 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
             await _context.BeginBatchAsync();
             await _context.BeginPathAsync();
             await _context.SetStrokeStyleAsync(color);
+            await _context.SetLineWidthAsync(1);
             foreach (var bypass in _gameState.Bypasses.Values.Where(bp => bp.BypassType == bypassType))
             {
                 var hasObject = _gameState.Indices.GalacticObjectByBypassId.TryGetValue(bypass.Id, out var galacticObject);
@@ -83,7 +85,7 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
                     continue;
 
                 var p1 = _mapSettings.GetModifiedCoordinate(galacticObject!.Coordinate);
-                await _context.MoveToAsync(p1.X, p1.Y);
+                await _context.MoveToAsync(p1.X + objectRadius, p1.Y);
                 await _context.ArcAsync(p1.X, p1.Y, objectRadius, 0, 360);
 
                 if (renderConnections)
@@ -138,19 +140,19 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
             await _context.BeginPathAsync();
             await _context.SetStrokeStyleAsync("white");
             await _context.SetLineWidthAsync(2);
-            await _context.MoveToAsync(c.X, c.Y);
+            await _context.MoveToAsync(c.X + objectRadius, c.Y);
             await _context.ArcAsync(c.X, c.Y, objectRadius, 0, 360);
             await _context.StrokeAsync();
             await _context.EndBatchAsync();
         }
 
-        private async Task RenderMarkedSystemCoordinates(IEnumerable<string> markedFlags, double objectRadius = 5.0)
+        private async Task RenderMarkedSystemCoordinates(double objectRadius = 5.0)
         {
-            if (markedFlags == null || !markedFlags.Any())
+            if (_filterSettings.MarkedFlags == null || !_filterSettings.MarkedFlags.Any())
                 return;
 
             var markedSystemCoordinates = new List<Point>();
-            var markedSystems = _gameState.GalacticObjects.Values.Where(o => o.GalacticObjectFlags.Any(markedFlags.Contains));
+            var markedSystems = _gameState.GalacticObjects.Values.Where(o => o.GalacticObjectFlags.Any(_filterSettings.MarkedFlags.Contains));
             await _context.BeginBatchAsync();
             await _context.BeginPathAsync();
             await _context.SetStrokeStyleAsync("lightgray");
@@ -158,20 +160,20 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
             foreach (var markedSystem in markedSystems)
             {
                 var c = _mapSettings.GetModifiedCoordinate(markedSystem.Coordinate);
-                await _context.MoveToAsync(c.X, c.Y);
+                await _context.MoveToAsync(c.X + objectRadius, c.Y);
                 await _context.ArcAsync(c.X, c.Y, objectRadius, 0, 360);
             }
             await _context.StrokeAsync();
             await _context.EndBatchAsync();
         }
 
-        private async Task RenderMatchingNameSystemCoordinates(string? searchSystemName, double objectRadius = 5.0)
+        private async Task RenderMatchingNameSystemCoordinates(double objectWidth = 10)
         {
-            if (searchSystemName == null)
+            if (string.IsNullOrEmpty(_filterSettings.SearchSystemName))
                 return;
 
             var matchingNameSystemCoordinates = new List<Point>();
-            var matchingNameSystems = _gameState.GalacticObjects.Values.Where(o => o.Name.Key.ToLower().StartsWith(searchSystemName));
+            var matchingNameSystems = _gameState.GalacticObjects.Values.Where(o => o.Name.Key.ToLower().StartsWith(_filterSettings.SearchSystemName));
             await _context.BeginBatchAsync();
             await _context.BeginPathAsync();
             await _context.SetStrokeStyleAsync("lightgray");
@@ -179,8 +181,7 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
             foreach (var matchingNameSystem in matchingNameSystems)
             {
                 var c = _mapSettings.GetModifiedCoordinate(matchingNameSystem.Coordinate);
-                await _context.MoveToAsync(c.X, c.Y);
-                await _context.ArcAsync(c.X, c.Y, objectRadius, 0, 360);
+                await _context.RectAsync(c.X, c.Y, objectWidth, objectWidth);
             }
             await _context.StrokeAsync();
             await _context.EndBatchAsync();
