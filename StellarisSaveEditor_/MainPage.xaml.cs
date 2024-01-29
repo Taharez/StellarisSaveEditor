@@ -12,7 +12,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
 using StellarisSaveEditor.Models;
-using StellarisSaveEditor.Models.Enums;
 using StellarisSaveEditor.Helpers;
 using StellarisSaveEditor.Parser;
 using Microsoft.UI;
@@ -245,10 +244,8 @@ namespace StellarisSaveEditor
                 return;
 
             MarkSystemFlags.Items.Clear();
-            var systemFlags = Enum.GetNames(typeof(GalacticObjectFlag)).ToList();
             var presentSystemFlags = GameState.GalacticObjects.Values.SelectMany(o => o.GalacticObjectFlags ?? new List<string>()).Distinct().ToList();
-            systemFlags = systemFlags.Union(presentSystemFlags).ToList(); // Make sure we use all flags in file, even if they are unknown (not in enum)
-            foreach (var systemFlag in systemFlags)
+            foreach (var systemFlag in presentSystemFlags)
             {
                 MarkSystemFlags.Items.Add(new ListBoxItem
                 {

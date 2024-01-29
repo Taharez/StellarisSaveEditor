@@ -2,7 +2,6 @@
 using System;
 using System.Linq;
 using StellarisSaveEditor.Models;
-using StellarisSaveEditor.Models.Enums;
 using StellarisSaveEditor.Models.Extensions;
 using StellarisSaveEditor.Common;
 
@@ -71,12 +70,6 @@ namespace StellarisSaveEditor.Parser
 
                 // Type and name
                 var typeString = galacticObjectItem.GetAttributeValueByName("type");
-                Enum.TryParse(typeString, out GalacticObjectType type);
-                if (type == GalacticObjectType.unknown)
-                {
-                    // Log unknown flag
-                    _logger.Log(LogLevel.Information, "Unknown galactic object type: " + typeString);
-                }
                 galacticObject.Type = typeString;
                 galacticObject.Name = ParseLocalizableString(galacticObjectItem);
 
@@ -90,12 +83,6 @@ namespace StellarisSaveEditor.Parser
 
                 // Star class
                 var starClassString = galacticObjectItem.GetAttributeValueByName("star_class");
-                Enum.TryParse(starClassString, out StarClass starClass);
-                if (starClass == StarClass.unknown)
-                {
-                    // Log unknown flag
-                    _logger.Log(LogLevel.Information, "Unknown star class: " + starClassString);
-                }
                 galacticObject.StarClass = starClassString;
 
                 // Hyper lanes
@@ -130,12 +117,6 @@ namespace StellarisSaveEditor.Parser
                 {
                     foreach (var flagAttribute in flagsSection.Attributes)
                     {
-                        Enum.TryParse(flagAttribute.Name, out GalacticObjectFlag flag);
-                        if (flag == GalacticObjectFlag.unknown)
-                        {
-                            // Log unknown flag
-                            _logger.Log(LogLevel.Information, "Unknown galactic object flag: " + flagAttribute.Name);
-                        }
                         galacticObject.GalacticObjectFlags.Add(flagAttribute.Name);
                     }
                 }
