@@ -167,11 +167,12 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
             await _context.EndBatchAsync();
         }
 
-        private async Task RenderMatchingNameSystemCoordinates(double objectWidth = 10)
+        private async Task RenderMatchingNameSystemCoordinates(double objectRadius = 5)
         {
             if (string.IsNullOrEmpty(_filterSettings.SearchSystemName))
                 return;
 
+            var objectWidth = 2 * objectRadius;
             var matchingNameSystemCoordinates = new List<Point>();
             var matchingNameSystems = _gameState.GalacticObjects.Values.Where(o => o.Name.Key.ToLower().StartsWith(_filterSettings.SearchSystemName));
             await _context.BeginBatchAsync();
@@ -181,7 +182,7 @@ namespace StellarisSaveEditor.BlazorWasm.Helpers
             foreach (var matchingNameSystem in matchingNameSystems)
             {
                 var c = _mapSettings.GetModifiedCoordinate(matchingNameSystem.Coordinate);
-                await _context.RectAsync(c.X, c.Y, objectWidth, objectWidth);
+                await _context.RectAsync(c.X - objectRadius, c.Y - objectRadius, objectWidth, objectWidth);
             }
             await _context.StrokeAsync();
             await _context.EndBatchAsync();
