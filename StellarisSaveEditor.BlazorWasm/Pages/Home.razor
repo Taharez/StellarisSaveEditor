@@ -15,18 +15,30 @@
 <div class="top-row px-4" style="padding-bottom: 10px;">
     <InputFile OnChange="HandleFileSelected" />
     <EditForm EditContext="_filterEditContext">
-        <label for="show-hyper-lanes">Hyper lanes</label>
-        <InputCheckbox id="show-hyper-lanes" @bind-Value="FilterSettings!.ShowHyperLanes"></InputCheckbox>
-        <label for="show-home-system">Home system</label>
-        <InputCheckbox id="show-home-system" @bind-Value="FilterSettings!.ShowHomeSystem"></InputCheckbox>
-        <label for="show-wormholes">Wormholes</label>
-        <InputCheckbox id="show-wormholes" @bind-Value="FilterSettings!.ShowWormholes"></InputCheckbox>
-        <label for="show-gateway-connections">Gateways</label>
-        <InputCheckbox id="show-gateway-connections" @bind-Value="FilterSettings!.ShowGateways"></InputCheckbox>
-        <label for="show-lgate-connections">L-Gates</label>
-        <InputCheckbox id="show-lgate-connections" @bind-Value="FilterSettings!.ShowLgates"></InputCheckbox>
-        <label for="search-system-name">Search:</label>
-        <InputText id="search-system-name" @bind-Value="FilterSettings!.SearchSystemName"></InputText>
+        <label>
+            Hyper lanes
+            <InputCheckbox @bind-Value="FilterSettings!.ShowHyperLanes"></InputCheckbox>
+        </label>
+        <label>
+            Home system
+            <InputCheckbox @bind-Value="FilterSettings!.ShowHomeSystem"></InputCheckbox>
+        </label>
+        <label>
+            Wormholes
+            <InputCheckbox @bind-Value="FilterSettings!.ShowWormholes"></InputCheckbox>
+        </label>
+        <label>
+            Gateways
+            <InputCheckbox @bind-Value="FilterSettings!.ShowGateways"></InputCheckbox>
+        </label>
+        <label>
+            L-Gates
+            <InputCheckbox @bind-Value="FilterSettings!.ShowLgates"></InputCheckbox>
+        </label>
+        <label>
+            Search:
+            <InputText @bind-Value="FilterSettings!.SearchSystemName"></InputText>
+        </label>
     </EditForm>
 </div>
 
